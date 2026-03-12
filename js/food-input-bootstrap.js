@@ -13,6 +13,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   // ------------------------------------------------------------------
+  // Diagnostic: confirm this file executed and the controller is live
+  // ------------------------------------------------------------------
+  console.log("BOOTSTRAP LOADED");
+  console.log("Controller:", window.FoodInputController);
+
+  // ------------------------------------------------------------------
   // 1. Register all input adapters with the controller
   // ------------------------------------------------------------------
   FoodInputController.registerAdapter('scan',      new BarcodeScannerAdapter());
@@ -31,10 +37,18 @@ document.addEventListener('DOMContentLoaded', function () {
     scanBtn.parentNode.replaceChild(scanBtnClone, scanBtn);
 
     scanBtnClone.addEventListener('click', async () => {
+      console.log("SCAN CLICKED");
       try {
+        console.log("REQUESTING SCAN INPUT");
         await FoodInputController.requestFoodInput('scan');
       } catch (e) {
-        await FoodInputController.requestFoodInput('manual');
+        console.error("Food input error", e);
+        try {
+          console.log("REQUESTING SCAN INPUT");
+          await FoodInputController.requestFoodInput('manual');
+        } catch (e2) {
+          console.error("Food input error", e2);
+        }
       }
     });
 
