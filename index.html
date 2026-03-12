@@ -1189,6 +1189,11 @@
         <div class="empty-state">Log at least 2 weight entries to see your trend chart.</div>
       </div>
     </div>
+
+    <div class="progress-card" id="weekly-summary-card" style="margin-top:24px;">
+      <div class="section-title" style="font-size:16px;margin-bottom:16px;">WEEKLY SUMMARY</div>
+      <div id="weekly-summary-content"></div>
+    </div>
   </div>
 
   <!-- ══ TARGETS TAB ══ -->
@@ -1833,6 +1838,7 @@ function updateStats() {
 
   // Logging streak
   document.getElementById('streak-number').textContent = calculateLoggingStreak();
+  renderWeeklySummary();
 }
 
 // ── MEAL PLAN ──
@@ -1920,6 +1926,7 @@ function renderWeightHistory() {
 
   updateProgressStats(weightLog);
   renderChart(weightLog);
+  renderWeeklySummary();
 }
 
 function updateProgressStats(data) {
@@ -1988,6 +1995,59 @@ function renderChart(data) {
       ${dots}
       ${labels}
     </svg>
+  `;
+}
+
+// ── WEEKLY STATS ──
+function calculateWeeklyAverageCalories() {
+  const today = new Date();
+  let totalCal = 0;
+  let daysWithEntries = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const entries = logsByDate[dateStr];
+    if (entries && entries.length > 0) {
+      totalCal += entries.reduce((sum, f) => sum + (f.cal || 0), 0);
+      daysWithEntries++;
+    }
+  }
+  if (daysWithEntries === 0) return null;
+  return Math.round(totalCal / daysWithEntries);
+}
+
+function calculateWeeklyWeightChange() {
+  if (weightLog.length < 2) return null;
+  const today = new Date();
+  const weekAgo = new Date(today);
+  weekAgo.setDate(today.getDate() - 7);
+  const weekAgoStr = weekAgo.toISOString().slice(0, 10);
+  const recent = weightLog.filter(e => e.date >= weekAgoStr);
+  if (recent.length < 2) return null;
+  const first = recent[0].weight;
+  const last = recent[recent.length - 1].weight;
+  return parseFloat((last - first).toFixed(1));
+}
+
+function renderWeeklySummary() {
+  const container = document.getElementById('weekly-summary-content');
+  if (!container) return;
+  const avgCal = calculateWeeklyAverageCalories();
+  const weightChange = calculateWeeklyWeightChange();
+  const changeColor = weightChange === null ? 'inherit'
+    : weightChange < 0 ? 'var(--success)'
+    : weightChange > 0 ? '#ff4f4f'
+    : 'inherit';
+  container.innerHTML = `
+    <div class="target-row">
+      <span class="target-label">Avg Daily Calories (7d)</span>
+      <span class="target-val">${avgCal !== null ? avgCal + ' kcal' : '—'}</span>
+    </div>
+    <div class="target-row">
+      <span class="target-label">Weight Change (7d)</span>
+      <span class="target-val" style="color:${changeColor}">${weightChange !== null ? (weightChange > 0 ? '+' : '') + weightChange + ' lbs' : '—'}</span>
+    </div>
   `;
 }
 
