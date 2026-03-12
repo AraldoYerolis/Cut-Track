@@ -707,6 +707,11 @@
       </div>
     </div>
 
+    <div style="margin-bottom:14px;" id="preset-section">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Meal Presets</div>
+      <div class="quick-add-grid" id="preset-grid"></div>
+    </div>
+
     <div style="margin-bottom:14px;">
       <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Quick Add — Common Foods</div>
       <div class="quick-add-grid" id="quick-grid"></div>
@@ -984,7 +989,11 @@ const PROFILE_DEFAULT = {
   goal: 'cut',
   enabledFoodIds: [],
   customFoods: [],
-  mealPresets: []
+  mealPresets: [
+    { id: 'preset-morning', name: 'Morning Stack', foods: [{ foodId: 'eggs', servings: 1 }, { foodId: 'oatmeal', servings: 1 }] },
+    { id: 'preset-lean-lunch', name: 'Lean Lunch', foods: [{ foodId: 'chicken-breast', servings: 1 }, { foodId: 'brown-rice', servings: 1 }, { foodId: 'broccoli', servings: 1 }] },
+    { id: 'preset-dinner', name: 'Dinner', foods: [{ foodId: 'salmon', servings: 1 }, { foodId: 'sweet-potato', servings: 1 }, { foodId: 'broccoli', servings: 1 }] }
+  ]
 };
 let userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
 
@@ -1058,6 +1067,7 @@ function init() {
   (userProfile.customFoods || []).forEach(f => {
     if (!foodDatabase.find(d => d.id === f.id)) foodDatabase.push(f);
   });
+  renderMealPresets();
   renderQuickAdd();
   renderFoodTab();
   renderLog();
@@ -1077,6 +1087,47 @@ function switchTab(tab) {
   document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   event.target.classList.add('active');
+}
+
+// ── MEAL PRESETS ──
+function renderMealPresets() {
+  const grid = document.getElementById('preset-grid');
+  const section = document.getElementById('preset-section');
+  const presets = userProfile.mealPresets || [];
+  if (!presets.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  grid.innerHTML = presets.map(p => {
+    const totals = p.foods.reduce((acc, { foodId, servings }) => {
+      const food = foodDatabase.find(f => f.id === foodId);
+      if (!food) return acc;
+      const s = servings || 1;
+      return { cal: acc.cal + Math.round(food.cal * s), prot: acc.prot + Math.round(food.prot * s) };
+    }, { cal: 0, prot: 0 });
+    return `
+    <button class="quick-food-btn" onclick="logPreset('${p.id}')">
+      <div class="qf-name">${p.name}</div>
+      <div class="qf-macros">
+        <span style="color:var(--accent)">${totals.cal} cal</span>
+        <span class="p">${totals.prot}P</span>
+        <span style="color:var(--muted)">${p.foods.length} items</span>
+      </div>
+    </button>
+  `;
+  }).join('');
+}
+
+function logPreset(presetId) {
+  const preset = (userProfile.mealPresets || []).find(p => p.id === presetId);
+  if (!preset) return;
+  preset.foods.forEach(({ foodId, servings }) => {
+    const food = foodDatabase.find(f => f.id === foodId);
+    if (!food) return;
+    const s = servings || 1;
+    logItems.push({ ...food, cal: Math.round(food.cal * s), prot: Math.round(food.prot * s), carb: Math.round(food.carb * s), fat: Math.round(food.fat * s) });
+  });
+  saveLog();
+  renderLog();
+  updateStats();
 }
 
 // ── QUICK ADD RENDER ──
