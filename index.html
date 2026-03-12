@@ -108,9 +108,9 @@
   /* ── STATS BAR ── */
   .stats-bar {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1fr;
     gap: 12px;
-    margin-bottom: 32px;
+    margin-bottom: 16px;
   }
 
   .stat-card {
@@ -893,7 +893,7 @@
   }
 
   @media (max-width: 768px) {
-    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stats-bar { grid-template-columns: 1fr; }
     .meal-plan-grid { grid-template-columns: 1fr; }
     .quick-add-grid { grid-template-columns: repeat(2, 1fr); }
     .tips-grid { grid-template-columns: 1fr; }
@@ -1302,7 +1302,15 @@
   <!-- ══ TRACKER TAB ══ -->
   <div class="tab-content active" id="tab-tracker">
 
-    <div class="stats-bar" style="margin-top:28px;">
+    <!-- 1. Execution Hero — primary command surface -->
+    <section id="execution-hero" style="margin-top:28px;">
+      <div id="remaining-calories-value">0</div>
+      <div id="protocol-status-badge">ON TRACK</div>
+      <div id="logging-streak-value">0</div>
+    </section>
+
+    <!-- 2. Calories Stat Card -->
+    <div class="stats-bar">
       <div class="stat-card cal">
         <div class="stat-label">Calories Left</div>
         <div class="stat-main" id="cal-remaining">2100</div>
@@ -1315,55 +1323,9 @@
           </div>
         </div>
       </div>
-      <div class="stat-card protein">
-        <div class="stat-label">Protein Left</div>
-        <div class="stat-main" id="prot-remaining">185g</div>
-        <div class="stat-sub">of 185g target</div>
-        <div class="macro-bars" style="margin-top:12px;">
-          <div class="macro-bar-wrap">
-            <div class="macro-bar-track">
-              <div class="macro-bar-fill" id="prot-bar" style="width:0%;background:var(--protein-color);"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="stat-card carb">
-        <div class="stat-label">Carbs Left</div>
-        <div class="stat-main" id="carb-remaining">175g</div>
-        <div class="stat-sub">of 175g target</div>
-        <div class="macro-bars" style="margin-top:12px;">
-          <div class="macro-bar-wrap">
-            <div class="macro-bar-track">
-              <div class="macro-bar-fill" id="carb-bar" style="width:0%;background:var(--carb-color);"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="stat-card fat">
-        <div class="stat-label">Fat Left</div>
-        <div class="stat-main" id="fat-remaining">65g</div>
-        <div class="stat-sub">of 65g target</div>
-        <div class="macro-bars" style="margin-top:12px;">
-          <div class="macro-bar-wrap">
-            <div class="macro-bar-track">
-              <div class="macro-bar-fill" id="fat-bar" style="width:0%;background:var(--fat-color);"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="streak-bar" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 20px;">
-        <span style="font-size:20px;">🔥</span>
-        <span id="streak-number" style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:var(--accent);">0</span>
-        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">day logging streak</span>
-      </div>
     </div>
 
-    <section id="execution-hero">
-      <div id="remaining-calories-value">0</div>
-      <div id="protocol-status-badge">ON TRACK</div>
-      <div id="logging-streak-value">0</div>
-    </section>
-
+    <!-- 3. Macro Pressure Panel -->
     <div id="macro-pressure">
       <div class="mp-header">Macro Pressure</div>
 
@@ -1398,6 +1360,7 @@
       </div>
     </div>
 
+    <!-- 4. Fast Log Entry Buttons -->
     <div id="log-entry">
       <button id="btn-scan" class="le-btn" onclick="startBarcodeScanner()">
         <span class="le-icon">⊙</span>
@@ -1431,6 +1394,19 @@
 
     <div id="over-alert" class="alert-bar">⚠ You've exceeded your calorie target for today. Consider lighter options for your next meal.</div>
 
+    <!-- 5. Meal Presets -->
+    <div style="margin-bottom:14px;" id="preset-section">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Meal Presets</div>
+      <div class="quick-add-grid" id="preset-grid"></div>
+    </div>
+
+    <!-- 6. Quick Add -->
+    <div style="margin-bottom:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Quick Add — Common Foods</div>
+      <div class="quick-add-grid" id="quick-grid"></div>
+    </div>
+
+    <!-- 7. Food Log Table -->
     <div class="section-header">
       <div class="section-title">TODAY'S FOOD LOG</div>
       <div style="display:flex;gap:8px;">
@@ -1469,16 +1445,6 @@
       </div>
     </div>
 
-    <div style="margin-bottom:14px;" id="preset-section">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Meal Presets</div>
-      <div class="quick-add-grid" id="preset-grid"></div>
-    </div>
-
-    <div style="margin-bottom:14px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Quick Add — Common Foods</div>
-      <div class="quick-add-grid" id="quick-grid"></div>
-    </div>
-
     <div id="date-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <button class="btn secondary" onclick="prevDay()">&#8592;</button>
       <div id="date-display" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--text);"></div>
@@ -1506,6 +1472,15 @@
         <span></span>
       </div>
     </div>
+
+    <!-- Ghost elements: preserve JS-referenced IDs from removed stat cards -->
+    <span id="prot-remaining" style="display:none"></span>
+    <div id="prot-bar" style="display:none"></div>
+    <span id="carb-remaining" style="display:none"></span>
+    <div id="carb-bar" style="display:none"></div>
+    <span id="fat-remaining" style="display:none"></span>
+    <div id="fat-bar" style="display:none"></div>
+    <span id="streak-number" style="display:none"></span>
 
   </div>
 
@@ -1583,26 +1558,24 @@
       </div>
     </div>
 
-    <div class="progress-card" id="weekly-summary-card" style="margin-top:24px;">
-      <div class="section-title" style="font-size:16px;margin-bottom:16px;">WEEKLY SUMMARY</div>
+    <div class="progress-card" style="margin-top:24px;">
+      <div class="section-title" style="font-size:16px;margin-bottom:16px;">SYSTEM INTELLIGENCE</div>
       <div id="weekly-summary-content"></div>
-    </div>
-
-    <div class="progress-card" id="outcome-signal" style="margin-top:24px;">
-      <div class="section-title" style="font-size:16px;margin-bottom:16px;">OUTCOME SIGNAL</div>
-      <div class="outcome-signal-grid">
-        <div class="outcome-metric">
-          <div class="outcome-label">WEEKLY WEIGHT DELTA</div>
-          <div class="outcome-value" id="weekly-weight-delta">—</div>
-        </div>
-        <div class="outcome-metric">
-          <div class="outcome-label">EXECUTION SCORE</div>
-          <div class="outcome-value" id="execution-score">—</div>
-          <div class="outcome-sub" id="execution-score-sub"></div>
-        </div>
-        <div class="outcome-metric">
-          <div class="outcome-label">TREND</div>
-          <div class="outcome-value" id="trend-indicator">—</div>
+      <div id="outcome-signal" style="margin-top:16px;">
+        <div class="outcome-signal-grid">
+          <div class="outcome-metric">
+            <div class="outcome-label">WEEKLY WEIGHT DELTA</div>
+            <div class="outcome-value" id="weekly-weight-delta">—</div>
+          </div>
+          <div class="outcome-metric">
+            <div class="outcome-label">EXECUTION SCORE</div>
+            <div class="outcome-value" id="execution-score">—</div>
+            <div class="outcome-sub" id="execution-score-sub"></div>
+          </div>
+          <div class="outcome-metric">
+            <div class="outcome-label">TREND</div>
+            <div class="outcome-value" id="trend-indicator">—</div>
+          </div>
         </div>
       </div>
     </div>
