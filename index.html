@@ -897,6 +897,37 @@
       <div style="font-size:13px;color:var(--muted);">Toggle foods to include them in quick add</div>
     </div>
     <div id="food-grid"></div>
+    <div style="margin-top:28px;margin-bottom:8px;">
+      <div class="section-title" style="margin-bottom:6px;">ADD CUSTOM FOOD</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Save a custom food to the database and quick add</div>
+    </div>
+    <div class="add-food-form open" id="custom-food-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Food Name</label>
+          <input type="text" id="cf-name" placeholder="e.g. Protein Bar">
+        </div>
+        <div class="form-group">
+          <label>Calories</label>
+          <input type="number" id="cf-cal" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Protein (g)</label>
+          <input type="number" id="cf-prot" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Carbs (g)</label>
+          <input type="number" id="cf-carb" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Fat (g)</label>
+          <input type="number" id="cf-fat" placeholder="0">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="addCustomFood()">Save to Database</button>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -1024,6 +1055,9 @@ const MEAL_PLAN = [
 // ── INIT ──
 function init() {
   userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
+  (userProfile.customFoods || []).forEach(f => {
+    if (!foodDatabase.find(d => d.id === f.id)) foodDatabase.push(f);
+  });
   renderQuickAdd();
   renderFoodTab();
   renderLog();
@@ -1106,6 +1140,23 @@ function toggleFoodEnabled(id) {
   saveProfile();
   renderQuickAdd();
   renderFoodTab();
+}
+
+// ── CUSTOM FOOD ──
+function addCustomFood() {
+  const name = document.getElementById('cf-name').value.trim();
+  const cal = parseInt(document.getElementById('cf-cal').value) || 0;
+  const prot = parseInt(document.getElementById('cf-prot').value) || 0;
+  const carb = parseInt(document.getElementById('cf-carb').value) || 0;
+  const fat = parseInt(document.getElementById('cf-fat').value) || 0;
+  if (!name) return;
+  const food = { id: 'custom-' + Date.now(), name, cal, prot, carb, fat, category: 'custom' };
+  userProfile.customFoods.push(food);
+  saveProfile();
+  foodDatabase.push(food);
+  renderFoodTab();
+  renderQuickAdd();
+  ['cf-name','cf-cal','cf-prot','cf-carb','cf-fat'].forEach(id => document.getElementById(id).value = '');
 }
 
 // ── ADD FOOD FORM ──
