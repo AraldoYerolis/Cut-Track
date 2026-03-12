@@ -1070,6 +1070,41 @@
     color: var(--accent);
   }
 
+  .ob-food-category-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 10px 0 8px;
+  }
+
+  .ob-cat-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+
+  .ob-cat-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,255,71,0.07);
+  }
+
+  .ob-food-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+    min-height: 14px;
+  }
+
   .onboarding-nav {
     display: flex;
     gap: 12px;
@@ -1226,7 +1261,16 @@
       <div class="onboarding-step-label">Step 6 of 6</div>
       <div class="onboarding-title">FAVORITE FOODS</div>
       <div class="onboarding-sub">Pick foods you eat regularly — they'll appear in Quick Add. Skip to enable all.</div>
+      <div class="ob-food-category-tabs" id="ob-category-tabs">
+        <button class="ob-cat-btn active" onclick="filterObFoodCategory('all', this)">ALL</button>
+        <button class="ob-cat-btn" onclick="filterObFoodCategory('protein', this)">PROTEIN</button>
+        <button class="ob-cat-btn" onclick="filterObFoodCategory('carb', this)">CARBS</button>
+        <button class="ob-cat-btn" onclick="filterObFoodCategory('veggie', this)">VEGGIES</button>
+        <button class="ob-cat-btn" onclick="filterObFoodCategory('fat', this)">FATS</button>
+        <button class="ob-cat-btn" onclick="filterObFoodCategory('mixed', this)">MIXED</button>
+      </div>
       <div class="onboarding-food-grid" id="ob-food-grid"></div>
+      <div class="ob-food-count" id="ob-food-count"></div>
     </div>
 
     <!-- Navigation -->
@@ -1816,18 +1860,47 @@ function saveProfile() {
 
 // ── QUICK FOODS ──
 const foodDatabase = [
-  { id: 'chicken-breast', name: 'Chicken Breast (6oz)', cal: 186, prot: 38, carb: 0, fat: 4, category: 'protein' },
-  { id: 'eggs',           name: 'Eggs (3 whole)',       cal: 216, prot: 18, carb: 2, fat: 15, category: 'mixed' },
-  { id: 'greek-yogurt',   name: 'Greek Yogurt (1 cup)', cal: 130, prot: 22, carb: 9, fat: 0,  category: 'protein' },
-  { id: 'brown-rice',     name: 'Brown Rice (1 cup)',   cal: 216, prot: 5,  carb: 45, fat: 2, category: 'carb' },
-  { id: 'sweet-potato',   name: 'Sweet Potato (med)',   cal: 103, prot: 2,  carb: 24, fat: 0, category: 'carb' },
-  { id: 'salmon',         name: 'Salmon (6oz)',         cal: 310, prot: 42, carb: 0, fat: 14, category: 'protein' },
-  { id: 'ground-beef',    name: 'Ground Beef 93% (5oz)',cal: 215, prot: 30, carb: 0, fat: 10, category: 'protein' },
-  { id: 'oatmeal',        name: 'Oatmeal (1 cup)',      cal: 154, prot: 5,  carb: 27, fat: 3, category: 'carb' },
-  { id: 'cottage-cheese', name: 'Cottage Cheese (1 cup)',cal: 206, prot: 28, carb: 8, fat: 5, category: 'protein' },
-  { id: 'protein-shake',  name: 'Protein Shake',        cal: 130, prot: 25, carb: 6, fat: 2,  category: 'protein' },
-  { id: 'broccoli',       name: 'Broccoli (2 cups)',    cal: 62,  prot: 5,  carb: 12, fat: 0, category: 'veggie' },
-  { id: 'almonds',        name: 'Almonds (1oz)',         cal: 164, prot: 6,  carb: 6, fat: 14, category: 'fat' },
+  // ── Protein ──
+  { id: 'chicken-breast', name: 'Chicken Breast (6oz)',   cal: 186, prot: 38, carb: 0,  fat: 4,  category: 'protein' },
+  { id: 'salmon',         name: 'Salmon (6oz)',            cal: 310, prot: 42, carb: 0,  fat: 14, category: 'protein' },
+  { id: 'ground-beef',    name: 'Ground Beef 93% (5oz)',   cal: 215, prot: 30, carb: 0,  fat: 10, category: 'protein' },
+  { id: 'tuna',           name: 'Tuna Canned (5oz)',       cal: 150, prot: 33, carb: 0,  fat: 1,  category: 'protein' },
+  { id: 'turkey-breast',  name: 'Turkey Breast (6oz)',     cal: 180, prot: 38, carb: 0,  fat: 2,  category: 'protein' },
+  { id: 'shrimp',         name: 'Shrimp (6oz)',            cal: 168, prot: 32, carb: 2,  fat: 2,  category: 'protein' },
+  { id: 'greek-yogurt',   name: 'Greek Yogurt (1 cup)',    cal: 130, prot: 22, carb: 9,  fat: 0,  category: 'protein' },
+  { id: 'cottage-cheese', name: 'Cottage Cheese (1 cup)',  cal: 206, prot: 28, carb: 8,  fat: 5,  category: 'protein' },
+  { id: 'egg-whites',     name: 'Egg Whites (1 cup)',      cal: 126, prot: 26, carb: 2,  fat: 0,  category: 'protein' },
+  { id: 'protein-shake',  name: 'Protein Shake',           cal: 130, prot: 25, carb: 6,  fat: 2,  category: 'protein' },
+  // ── Carbs ──
+  { id: 'brown-rice',     name: 'Brown Rice (1 cup)',      cal: 216, prot: 5,  carb: 45, fat: 2,  category: 'carb' },
+  { id: 'white-rice',     name: 'White Rice (1 cup)',      cal: 206, prot: 4,  carb: 45, fat: 0,  category: 'carb' },
+  { id: 'oatmeal',        name: 'Oatmeal (1 cup)',         cal: 154, prot: 5,  carb: 27, fat: 3,  category: 'carb' },
+  { id: 'sweet-potato',   name: 'Sweet Potato (med)',      cal: 103, prot: 2,  carb: 24, fat: 0,  category: 'carb' },
+  { id: 'quinoa',         name: 'Quinoa (1 cup)',          cal: 222, prot: 8,  carb: 39, fat: 4,  category: 'carb' },
+  { id: 'banana',         name: 'Banana (1 large)',        cal: 120, prot: 1,  carb: 31, fat: 0,  category: 'carb' },
+  { id: 'apple',          name: 'Apple (1 med)',           cal: 95,  prot: 0,  carb: 25, fat: 0,  category: 'carb' },
+  { id: 'whole-wheat-bread', name: 'Whole Wheat Bread (2 sl)', cal: 160, prot: 7, carb: 30, fat: 2, category: 'carb' },
+  { id: 'pasta',          name: 'Pasta (1 cup cooked)',    cal: 220, prot: 8,  carb: 43, fat: 1,  category: 'carb' },
+  // ── Veggies ──
+  { id: 'broccoli',       name: 'Broccoli (2 cups)',       cal: 62,  prot: 5,  carb: 12, fat: 0,  category: 'veggie' },
+  { id: 'spinach',        name: 'Spinach (2 cups)',        cal: 14,  prot: 2,  carb: 2,  fat: 0,  category: 'veggie' },
+  { id: 'asparagus',      name: 'Asparagus (1 cup)',       cal: 27,  prot: 3,  carb: 5,  fat: 0,  category: 'veggie' },
+  { id: 'bell-pepper',    name: 'Bell Pepper (1 med)',     cal: 31,  prot: 1,  carb: 7,  fat: 0,  category: 'veggie' },
+  { id: 'mixed-greens',   name: 'Mixed Greens (2 cups)',   cal: 20,  prot: 2,  carb: 3,  fat: 0,  category: 'veggie' },
+  { id: 'cucumber',       name: 'Cucumber (1 med)',        cal: 45,  prot: 2,  carb: 11, fat: 0,  category: 'veggie' },
+  { id: 'zucchini',       name: 'Zucchini (1 med)',        cal: 33,  prot: 2,  carb: 6,  fat: 0,  category: 'veggie' },
+  // ── Fats ──
+  { id: 'almonds',        name: 'Almonds (1oz)',           cal: 164, prot: 6,  carb: 6,  fat: 14, category: 'fat' },
+  { id: 'avocado',        name: 'Avocado (½ med)',         cal: 120, prot: 1,  carb: 6,  fat: 11, category: 'fat' },
+  { id: 'peanut-butter',  name: 'Peanut Butter (2 tbsp)',  cal: 188, prot: 8,  carb: 6,  fat: 16, category: 'fat' },
+  { id: 'olive-oil',      name: 'Olive Oil (1 tbsp)',      cal: 119, prot: 0,  carb: 0,  fat: 14, category: 'fat' },
+  { id: 'walnuts',        name: 'Walnuts (1oz)',           cal: 185, prot: 4,  carb: 4,  fat: 18, category: 'fat' },
+  { id: 'cheese',         name: 'Cheddar Cheese (1oz)',    cal: 110, prot: 7,  carb: 0,  fat: 9,  category: 'fat' },
+  // ── Mixed ──
+  { id: 'eggs',           name: 'Eggs (3 whole)',          cal: 216, prot: 18, carb: 2,  fat: 15, category: 'mixed' },
+  { id: 'turkey-burger',  name: 'Turkey Burger (4oz)',     cal: 180, prot: 22, carb: 0,  fat: 10, category: 'mixed' },
+  { id: 'beef-steak',     name: 'Beef Steak (6oz)',        cal: 336, prot: 44, carb: 0,  fat: 16, category: 'mixed' },
+  { id: 'protein-bar',    name: 'Protein Bar',             cal: 200, prot: 20, carb: 22, fat: 7,  category: 'mixed' },
 ];
 
 // ── MEAL PLAN ──
@@ -2675,17 +2748,40 @@ const OB_TOTAL = 6;
 const obData = { weight: null, height: null, age: null, activity: null, goal: null, enabledFoodIds: [] };
 
 function showOnboarding() {
+  renderObFoodGrid('all');
+  obStep = 1;
+  renderObStep();
+  document.getElementById('onboarding-overlay').classList.remove('hidden');
+}
+
+function renderObFoodGrid(category) {
+  const foods = category === 'all'
+    ? foodDatabase
+    : foodDatabase.filter(f => f.category === category);
   const grid = document.getElementById('ob-food-grid');
-  grid.innerHTML = foodDatabase.map(f => `
-    <button class="onboarding-food-btn" id="obf-${f.id}" onclick="toggleObFood('${f.id}', this)">
+  grid.innerHTML = foods.map(f => `
+    <button class="onboarding-food-btn${obData.enabledFoodIds.includes(f.id) ? ' selected' : ''}" id="obf-${f.id}" onclick="toggleObFood('${f.id}', this)">
       <div class="onboarding-food-name">${f.name}</div>
       <div class="onboarding-food-cal">${f.cal} cal &middot; ${f.prot}g P</div>
     </button>
   `).join('');
+  updateObFoodCount();
+}
 
-  obStep = 1;
-  renderObStep();
-  document.getElementById('onboarding-overlay').classList.remove('hidden');
+function filterObFoodCategory(category, el) {
+  document.getElementById('ob-category-tabs').querySelectorAll('.ob-cat-btn')
+    .forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderObFoodGrid(category);
+}
+
+function updateObFoodCount() {
+  const count = obData.enabledFoodIds.length;
+  const el = document.getElementById('ob-food-count');
+  if (!el) return;
+  el.textContent = count
+    ? `${count} food${count !== 1 ? 's' : ''} selected`
+    : 'No selection — all foods will appear in Quick Add';
 }
 
 function renderObStep() {
@@ -2721,6 +2817,7 @@ function toggleObFood(id, el) {
     obData.enabledFoodIds.splice(idx, 1);
     el.classList.remove('selected');
   }
+  updateObFoodCount();
 }
 
 function obNext() {
@@ -2758,12 +2855,15 @@ function obPrev() {
 }
 
 function finishOnboarding() {
-  userProfile.weight        = obData.weight   || userProfile.weight;
-  userProfile.height        = obData.height   || userProfile.height;
-  userProfile.age           = obData.age      || userProfile.age;
-  userProfile.activity      = obData.activity || userProfile.activity;
-  userProfile.goal          = obData.goal     || userProfile.goal;
-  userProfile.enabledFoodIds = obData.enabledFoodIds;
+  userProfile.weight   = obData.weight   || userProfile.weight;
+  userProfile.height   = obData.height   || userProfile.height;
+  userProfile.age      = obData.age      || userProfile.age;
+  userProfile.activity = obData.activity || userProfile.activity;
+  userProfile.goal     = obData.goal     || userProfile.goal;
+  // Only write enabledFoodIds for new users — never overwrite a returning user's selections
+  if (!localStorage.getItem('shred-onboarded')) {
+    userProfile.enabledFoodIds = obData.enabledFoodIds;
+  }
 
   saveProfile();
   localStorage.setItem('shred-onboarded', 'true');
