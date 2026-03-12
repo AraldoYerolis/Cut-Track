@@ -717,6 +717,12 @@
       <div class="quick-add-grid" id="quick-grid"></div>
     </div>
 
+    <div id="date-nav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <button class="btn secondary" onclick="prevDay()">&#8592;</button>
+      <div id="date-display" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--text);"></div>
+      <button class="btn secondary" id="next-day-btn" onclick="nextDay()">&#8594;</button>
+    </div>
+
     <div class="food-log">
       <div class="food-log-header">
         <span>Food</span>
@@ -987,7 +993,8 @@ function getTodayKey() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-let logItems = logsByDate[getTodayKey()] || [];
+let selectedDate = getTodayKey();
+let logItems = logsByDate[selectedDate] || [];
 
 // ── USER PROFILE ──
 const PROFILE_DEFAULT = {
@@ -1072,6 +1079,44 @@ const MEAL_PLAN = [
 ];
 
 // ── INIT ──
+// ── DATE NAVIGATION ──
+function updateDateDisplay() {
+  const today = getTodayKey();
+  const el = document.getElementById('date-display');
+  const nextBtn = document.getElementById('next-day-btn');
+  if (selectedDate === today) {
+    el.textContent = 'Today';
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.3';
+  } else {
+    const d = new Date(selectedDate + 'T00:00:00');
+    el.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+  }
+}
+
+function prevDay() {
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  selectedDate = d.toISOString().slice(0, 10);
+  logItems = logsByDate[selectedDate] || [];
+  updateDateDisplay();
+  renderLog();
+  updateStats();
+}
+
+function nextDay() {
+  if (selectedDate >= getTodayKey()) return;
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  selectedDate = d.toISOString().slice(0, 10);
+  logItems = logsByDate[selectedDate] || [];
+  updateDateDisplay();
+  renderLog();
+  updateStats();
+}
+
 function init() {
   userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
   (userProfile.customFoods || []).forEach(f => {
@@ -1080,6 +1125,7 @@ function init() {
   renderMealPresets();
   renderQuickAdd();
   renderFoodTab();
+  updateDateDisplay();
   renderLog();
   renderMealPlan();
   renderWeightHistory();
@@ -1129,9 +1175,8 @@ function renderMealPresets() {
 function logPreset(presetId) {
   const preset = (userProfile.mealPresets || []).find(p => p.id === presetId);
   if (!preset) return;
-  const todayKey = getTodayKey();
-  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
-  logItems = logsByDate[todayKey];
+  if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
   preset.foods.forEach(({ foodId, servings }) => {
     const food = foodDatabase.find(f => f.id === foodId);
     if (!food) return;
@@ -1187,9 +1232,8 @@ function renderFoodTab() {
 }
 
 function quickAdd(idx) {
-  const todayKey = getTodayKey();
-  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
-  logItems = logsByDate[todayKey];
+  if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
   const f = foodDatabase[idx];
   logItems.push({ ...f });
   saveLog();
@@ -1239,9 +1283,8 @@ function addFood() {
   const carb = parseInt(document.getElementById('f-carb').value) || 0;
   const fat = parseInt(document.getElementById('f-fat').value) || 0;
   if (!name) return;
-  const todayKey = getTodayKey();
-  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
-  logItems = logsByDate[todayKey];
+  if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
   logItems.push({ name, cal, prot, carb, fat });
   saveLog();
   renderLog();
@@ -1252,9 +1295,8 @@ function addFood() {
 }
 
 function removeFood(idx) {
-  const todayKey = getTodayKey();
-  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
-  logItems = logsByDate[todayKey];
+  if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
   logItems.splice(idx, 1);
   saveLog();
   renderLog();
@@ -1262,19 +1304,17 @@ function removeFood(idx) {
 }
 
 function clearLog() {
-  const todayKey = getTodayKey();
-  logItems = logsByDate[todayKey] || [];
+  logItems = logsByDate[selectedDate] || [];
   if (!logItems.length) return;
-  logsByDate[todayKey] = [];
-  logItems = logsByDate[todayKey];
+  logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
   saveLog();
   renderLog();
   updateStats();
 }
 
 function saveLog() {
-  const todayKey = getTodayKey();
-  logsByDate[todayKey] = logItems;
+  logsByDate[selectedDate] = logItems;
   localStorage.setItem('shred-logs', JSON.stringify(logsByDate));
 }
 
