@@ -2168,6 +2168,14 @@ function startBarcodeScanner() {
       _scannerStream = stream;
       const video = document.getElementById('scanner-video');
       video.srcObject = stream;
+      console.log('[Scanner] stream attached to video');
+      video.setAttribute('playsinline', true);
+      video.muted = true;
+      video.onloadedmetadata = () => {
+        video.play().catch(() => {
+          console.log('[Scanner] video.play() failed');
+        });
+      };
       const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
       const scan = () => {
         if (!overlay.classList.contains('open')) return;
