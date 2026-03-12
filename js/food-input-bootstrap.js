@@ -26,17 +26,19 @@ document.addEventListener('DOMContentLoaded', function () {
   // ------------------------------------------------------------------
   var scanBtn = document.querySelector('#btn-scan');
   if (scanBtn) {
-    scanBtn.addEventListener('click', async function () {
+    // Clone and replace to strip ALL existing click listeners safely.
+    var scanBtnClone = scanBtn.cloneNode(true);
+    scanBtn.parentNode.replaceChild(scanBtnClone, scanBtn);
+
+    scanBtnClone.addEventListener('click', async () => {
       try {
         await FoodInputController.requestFoodInput('scan');
-      } catch (scanErr) {
-        try {
-          await FoodInputController.requestFoodInput('manual');
-        } catch (manualErr) {
-          // Both adapters unavailable or dismissed — nothing to log.
-        }
+      } catch (e) {
+        await FoodInputController.requestFoodInput('manual');
       }
     });
+
+    console.log('SCAN BUTTON OVERRIDDEN');
   }
 
   // ------------------------------------------------------------------
