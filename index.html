@@ -976,8 +976,18 @@ function calculateTargets(profile) {
 
   return { cal, prot, carb, fat };
 }
-let logItems = JSON.parse(localStorage.getItem('shred-log') || '[]');
+let logsByDate = JSON.parse(localStorage.getItem('shred-logs') || '{}');
 let weightLog = JSON.parse(localStorage.getItem('shred-weights') || '[]');
+
+function getTodayKey() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+let logItems = logsByDate[getTodayKey()] || [];
 
 // ── USER PROFILE ──
 const PROFILE_DEFAULT = {
@@ -1119,6 +1129,9 @@ function renderMealPresets() {
 function logPreset(presetId) {
   const preset = (userProfile.mealPresets || []).find(p => p.id === presetId);
   if (!preset) return;
+  const todayKey = getTodayKey();
+  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
+  logItems = logsByDate[todayKey];
   preset.foods.forEach(({ foodId, servings }) => {
     const food = foodDatabase.find(f => f.id === foodId);
     if (!food) return;
@@ -1174,6 +1187,9 @@ function renderFoodTab() {
 }
 
 function quickAdd(idx) {
+  const todayKey = getTodayKey();
+  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
+  logItems = logsByDate[todayKey];
   const f = foodDatabase[idx];
   logItems.push({ ...f });
   saveLog();
@@ -1223,6 +1239,9 @@ function addFood() {
   const carb = parseInt(document.getElementById('f-carb').value) || 0;
   const fat = parseInt(document.getElementById('f-fat').value) || 0;
   if (!name) return;
+  const todayKey = getTodayKey();
+  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
+  logItems = logsByDate[todayKey];
   logItems.push({ name, cal, prot, carb, fat });
   saveLog();
   renderLog();
@@ -1233,6 +1252,9 @@ function addFood() {
 }
 
 function removeFood(idx) {
+  const todayKey = getTodayKey();
+  if (!logsByDate[todayKey]) logsByDate[todayKey] = [];
+  logItems = logsByDate[todayKey];
   logItems.splice(idx, 1);
   saveLog();
   renderLog();
@@ -1240,15 +1262,20 @@ function removeFood(idx) {
 }
 
 function clearLog() {
+  const todayKey = getTodayKey();
+  logItems = logsByDate[todayKey] || [];
   if (!logItems.length) return;
-  logItems = [];
+  logsByDate[todayKey] = [];
+  logItems = logsByDate[todayKey];
   saveLog();
   renderLog();
   updateStats();
 }
 
 function saveLog() {
-  localStorage.setItem('shred-log', JSON.stringify(logItems));
+  const todayKey = getTodayKey();
+  logsByDate[todayKey] = logItems;
+  localStorage.setItem('shred-logs', JSON.stringify(logsByDate));
 }
 
 // ── RENDER LOG ──
