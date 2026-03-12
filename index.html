@@ -894,6 +894,42 @@
 <script>
 // ── STATE ──
 const TARGETS = { cal: 2100, prot: 185, carb: 175, fat: 65 };
+
+// ── TARGET CALCULATOR ──
+function calculateTargets(profile) {
+  const weightKg = profile.weight / 2.2046;
+  const heightCm = profile.height * 2.54;
+
+  let bmr;
+  if (profile.sex === 'female') {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * profile.age - 161;
+  } else {
+    bmr = 10 * weightKg + 6.25 * heightCm - 5 * profile.age + 5;
+  }
+
+  const activityMultipliers = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    high: 1.725,
+    athlete: 1.9
+  };
+  const goalAdjustments = {
+    cut: -500,
+    aggressiveCut: -800,
+    maintain: 0,
+    leanBulk: 250
+  };
+
+  const tdee = bmr * (activityMultipliers[profile.activity] || 1.55);
+  const cal = Math.round(tdee + (goalAdjustments[profile.goal] || 0));
+
+  const prot = Math.round(profile.weight);
+  const fat = Math.round(profile.weight * 0.3);
+  const carb = Math.round((cal - prot * 4 - fat * 9) / 4);
+
+  return { cal, prot, carb, fat };
+}
 let logItems = JSON.parse(localStorage.getItem('shred-log') || '[]');
 let weightLog = JSON.parse(localStorage.getItem('shred-weights') || '[]');
 
@@ -1100,10 +1136,12 @@ function updateStats() {
   let totCal = 0, totP = 0, totC = 0, totF = 0;
   logItems.forEach(f => { totCal += f.cal; totP += f.prot; totC += f.carb; totF += f.fat; });
 
-  const remCal = TARGETS.cal - totCal;
-  const remP = TARGETS.prot - totP;
-  const remC = TARGETS.carb - totC;
-  const remF = TARGETS.fat - totF;
+  const targets = calculateTargets(userProfile);
+
+  const remCal = targets.cal - totCal;
+  const remP = targets.prot - totP;
+  const remC = targets.carb - totC;
+  const remF = targets.fat - totF;
 
   const fmt = (v, unit='') => v < 0 ? `<span style="color:var(--danger)">${v}${unit}</span>` : `${v}${unit}`;
 
@@ -1113,10 +1151,10 @@ function updateStats() {
   document.getElementById('fat-remaining').innerHTML = fmt(remF, 'g');
 
   // Bars
-  const pctCal = Math.min(100, (totCal / TARGETS.cal) * 100);
-  const pctP = Math.min(100, (totP / TARGETS.prot) * 100);
-  const pctC = Math.min(100, (totC / TARGETS.carb) * 100);
-  const pctF = Math.min(100, (totF / TARGETS.fat) * 100);
+  const pctCal = Math.min(100, (totCal / targets.cal) * 100);
+  const pctP = Math.min(100, (totP / targets.prot) * 100);
+  const pctC = Math.min(100, (totC / targets.carb) * 100);
+  const pctF = Math.min(100, (totF / targets.fat) * 100);
 
   document.getElementById('cal-bar').style.width = pctCal + '%';
   document.getElementById('prot-bar').style.width = pctP + '%';
@@ -1125,7 +1163,7 @@ function updateStats() {
 
   // Over alert
   const alert = document.getElementById('over-alert');
-  if (totCal > TARGETS.cal) alert.classList.add('show');
+  if (totCal > targets.cal) alert.classList.add('show');
   else alert.classList.remove('show');
 }
 
