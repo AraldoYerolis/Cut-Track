@@ -2149,66 +2149,20 @@ async function scanBarcode(barcode) {
   }
 }
 
-function startBarcodeScanner() {
+async function startBarcodeScanner() {
   console.log('[Scanner] startBarcodeScanner() entered');
-  const overlay = document.getElementById('scanner-overlay');
-  const hint = overlay.querySelector('.scanner-hint');
-  if (!('BarcodeDetector' in window)) {
-    console.log('[Scanner] BarcodeDetector not supported — falling back to manual entry');
-    alert('Scanner not supported on this device yet — opening manual entry.');
-    toggleAddForm();
-    return;
+  try {
+    await FoodInputController.requestFoodInput('scan');
+    console.log('[Scanner] food:selected dispatched via scan adapter');
+  } catch (scanErr) {
+    console.log('[Scanner] scan rejected, falling back to manual —', scanErr && scanErr.message ? scanErr.message : scanErr);
+    try {
+      await FoodInputController.requestFoodInput('manual');
+      console.log('[Scanner] food:selected dispatched via manual fallback');
+    } catch (manualErr) {
+      console.log('[Scanner] manual fallback also rejected —', manualErr && manualErr.message ? manualErr.message : manualErr);
+    }
   }
-  console.log('[Scanner] Overlay opening');
-  overlay.classList.add('open');
-  hint.textContent = 'Point camera at a barcode';
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(stream => {
-      console.log('[Scanner] Camera permission granted');
-      _scannerStream = stream;
-      const video = document.getElementById('scanner-video');
-      video.srcObject = stream;
-      console.log('[Scanner] stream attached to video');
-      video.setAttribute('playsinline', true);
-      video.muted = true;
-      video.onloadedmetadata = () => {
-        video.play().catch(() => {
-          console.log('[Scanner] video.play() failed');
-        });
-      };
-      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
-      const scan = () => {
-        if (!overlay.classList.contains('open')) return;
-        detector.detect(video).then(async codes => {
-          if (codes.length > 0) {
-            console.log('[Scanner] Barcode detected:', codes[0].rawValue);
-            hint.textContent = 'Looking up product…';
-            const barcode = codes[0].rawValue;
-            const result = await scanBarcode(barcode);
-            closeBarcodeScanner();
-            if (result) {
-              document.getElementById('f-name').value = result.name;
-              document.getElementById('f-cal').value  = result.cal;
-              document.getElementById('f-prot').value = result.prot;
-              document.getElementById('f-carb').value = result.carb;
-              document.getElementById('f-fat').value  = result.fat;
-            } else {
-              document.getElementById('f-name').value = barcode;
-            }
-            toggleAddForm();
-          } else {
-            requestAnimationFrame(scan);
-          }
-        }).catch(() => requestAnimationFrame(scan));
-      };
-      video.addEventListener('loadeddata', scan, { once: true });
-    })
-    .catch(() => {
-      console.log('[Scanner] Camera permission denied or unavailable');
-      alert('Camera unavailable or permission denied.');
-      closeBarcodeScanner();
-      toggleAddForm();
-    });
 }
 
 function closeBarcodeScanner() {
