@@ -607,6 +607,7 @@
     <button onclick="switchTab('meals')">MEAL PLAN</button>
     <button onclick="switchTab('progress')">PROGRESS</button>
     <button onclick="switchTab('targets')">TARGETS</button>
+    <button onclick="switchTab('food')">FOOD</button>
   </nav>
 </header>
 
@@ -889,6 +890,15 @@
     </div>
   </div>
 
+  <!-- ══ FOOD TAB ══ -->
+  <div class="tab-content" id="tab-food">
+    <div style="margin-top:28px;margin-bottom:24px;">
+      <div class="section-title" style="margin-bottom:6px;">FOOD DATABASE</div>
+      <div style="font-size:13px;color:var(--muted);">Toggle foods to include them in quick add</div>
+    </div>
+    <div id="food-grid"></div>
+  </div>
+
 </main>
 
 <script>
@@ -1015,6 +1025,7 @@ const MEAL_PLAN = [
 function init() {
   userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
   renderQuickAdd();
+  renderFoodTab();
   renderLog();
   renderMealPlan();
   renderWeightHistory();
@@ -1054,6 +1065,29 @@ function renderQuickAdd() {
   `).join('');
 }
 
+// ── FOOD TAB RENDER ──
+function renderFoodTab() {
+  const grid = document.getElementById('food-grid');
+  const enabled = userProfile.enabledFoodIds;
+  grid.innerHTML = foodDatabase.map(f => {
+    const isEnabled = !enabled.length || enabled.includes(f.id);
+    return `
+    <div style="background:var(--surface);border:1px solid ${isEnabled ? 'var(--accent)' : 'var(--border)'};border-radius:8px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;">${f.name}</div>
+        <div style="font-size:12px;display:flex;gap:12px;flex-wrap:wrap;">
+          <span style="color:var(--accent)">${f.cal} cal</span>
+          <span style="color:var(--protein-color)">${f.prot}g protein</span>
+          <span style="color:var(--carb-color)">${f.carb}g carbs</span>
+          <span style="color:var(--fat-color)">${f.fat}g fat</span>
+        </div>
+      </div>
+      <button onclick="toggleFoodEnabled('${f.id}')" style="background:${isEnabled ? 'var(--accent)' : 'var(--surface2)'};color:${isEnabled ? '#000' : 'var(--muted)'};border:1px solid ${isEnabled ? 'var(--accent)' : 'var(--border)'};border-radius:4px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">${isEnabled ? 'ENABLED' : 'DISABLED'}</button>
+    </div>
+  `;
+  }).join('');
+}
+
 function quickAdd(idx) {
   const f = foodDatabase[idx];
   logItems.push({ ...f });
@@ -1071,6 +1105,7 @@ function toggleFoodEnabled(id) {
   }
   saveProfile();
   renderQuickAdd();
+  renderFoodTab();
 }
 
 // ── ADD FOOD FORM ──
