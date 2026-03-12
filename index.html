@@ -1366,6 +1366,10 @@
         <span class="le-icon">⊙</span>
         <span class="le-label">Scan</span>
       </button>
+      <button id="btn-test-scanner" class="le-btn" onclick="document.getElementById('scanner-overlay').classList.add('open')">
+        <span class="le-icon">⬡</span>
+        <span class="le-label">TEST SCANNER</span>
+      </button>
       <button id="btn-quick-add" class="le-btn" onclick="toggleAddForm()">
         <span class="le-icon">＋</span>
         <span class="le-label">Manual</span>
@@ -2146,16 +2150,21 @@ async function scanBarcode(barcode) {
 }
 
 function startBarcodeScanner() {
+  console.log('[Scanner] startBarcodeScanner() entered');
   const overlay = document.getElementById('scanner-overlay');
   const hint = overlay.querySelector('.scanner-hint');
   if (!('BarcodeDetector' in window)) {
+    console.log('[Scanner] BarcodeDetector not supported — falling back to manual entry');
+    alert('Scanner not supported on this device yet — opening manual entry.');
     toggleAddForm();
     return;
   }
+  console.log('[Scanner] Overlay opening');
   overlay.classList.add('open');
   hint.textContent = 'Point camera at a barcode';
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(stream => {
+      console.log('[Scanner] Camera permission granted');
       _scannerStream = stream;
       const video = document.getElementById('scanner-video');
       video.srcObject = stream;
@@ -2164,6 +2173,7 @@ function startBarcodeScanner() {
         if (!overlay.classList.contains('open')) return;
         detector.detect(video).then(async codes => {
           if (codes.length > 0) {
+            console.log('[Scanner] Barcode detected:', codes[0].rawValue);
             hint.textContent = 'Looking up product…';
             const barcode = codes[0].rawValue;
             const result = await scanBarcode(barcode);
@@ -2186,7 +2196,8 @@ function startBarcodeScanner() {
       video.addEventListener('loadeddata', scan, { once: true });
     })
     .catch(() => {
-      // Camera permission denied or unavailable — fall back to manual entry
+      console.log('[Scanner] Camera permission denied or unavailable');
+      alert('Camera unavailable or permission denied.');
       closeBarcodeScanner();
       toggleAddForm();
     });
