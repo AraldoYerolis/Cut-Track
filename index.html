@@ -1029,6 +1029,11 @@
           </div>
         </div>
       </div>
+      <div class="streak-bar" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 20px;">
+        <span style="font-size:20px;">🔥</span>
+        <span id="streak-number" style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:var(--accent);">0</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">day logging streak</span>
+      </div>
     </div>
 
     <div id="over-alert" class="alert-bar">⚠ You've exceeded your calorie target for today. Consider lighter options for your next meal.</div>
@@ -1741,6 +1746,24 @@ function saveLog() {
   localStorage.setItem('shred-logs', JSON.stringify(logsByDate));
 }
 
+// ── LOGGING STREAK ──
+function calculateLoggingStreak() {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const key = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    if (logsByDate[key] && logsByDate[key].length > 0) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
 // ── RENDER LOG ──
 function renderLog() {
   const container = document.getElementById('log-items');
@@ -1807,6 +1830,9 @@ function updateStats() {
   const alert = document.getElementById('over-alert');
   if (totCal > targets.cal) alert.classList.add('show');
   else alert.classList.remove('show');
+
+  // Logging streak
+  document.getElementById('streak-number').textContent = calculateLoggingStreak();
 }
 
 // ── MEAL PLAN ──
