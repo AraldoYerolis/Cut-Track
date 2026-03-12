@@ -1614,7 +1614,7 @@ function logPreset(presetId) {
     const food = foodDatabase.find(f => f.id === foodId);
     if (!food) return;
     const s = servings || 1;
-    logItems.push({ ...food, cal: Math.round(food.cal * s), prot: Math.round(food.prot * s), carb: Math.round(food.carb * s), fat: Math.round(food.fat * s) });
+    logItems.push({ foodId: food.id, servings: s, cal: Math.round(food.cal * s), prot: Math.round(food.prot * s), carb: Math.round(food.carb * s), fat: Math.round(food.fat * s), name: food.name });
   });
   saveLog();
   renderLog();
@@ -1668,7 +1668,7 @@ function quickAdd(idx) {
   if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
   logItems = logsByDate[selectedDate];
   const f = foodDatabase[idx];
-  logItems.push({ ...f });
+  logItems.push({ foodId: f.id, servings: 1, cal: f.cal, prot: f.prot, carb: f.carb, fat: f.fat, name: f.name });
   saveLog();
   renderLog();
   updateStats();
@@ -1718,7 +1718,7 @@ function addFood() {
   if (!name) return;
   if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
   logItems = logsByDate[selectedDate];
-  logItems.push({ name, cal, prot, carb, fat });
+  logItems.push({ foodId: null, servings: 1, cal, prot, carb, fat, name });
   saveLog();
   renderLog();
   updateStats();
