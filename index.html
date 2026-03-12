@@ -726,6 +726,116 @@
   .mp-bar-wrap.macro-tension .mp-remaining { color: #ffb347; }
   .mp-bar-wrap.macro-critical .mp-remaining { color: var(--danger); }
 
+  /* ── FAST LOG ENTRY ── */
+  #log-entry {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .le-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 14px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    min-height: 64px;
+  }
+
+  .le-btn:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .le-btn.active {
+    border-color: var(--accent);
+  }
+
+  .le-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .le-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .le-btn.active .le-label { color: var(--accent); }
+
+  #le-favorites-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  #le-favorites-panel.open {
+    display: block;
+    animation: fadeUp 0.15s ease;
+  }
+
+  .le-panel-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  #scanner-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 1000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+  }
+
+  #scanner-overlay.open { display: flex; }
+
+  #scanner-video {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 8px;
+  }
+
+  .scanner-frame {
+    position: absolute;
+    width: 240px;
+    height: 160px;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .scanner-hint {
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
   /* ── EXECUTION HERO ── */
   #execution-hero {
     display: flex;
@@ -1192,6 +1302,37 @@
           <div class="mp-bar-fill" id="mp-fat-bar" style="width:0%"></div>
         </div>
       </div>
+    </div>
+
+    <div id="log-entry">
+      <button id="btn-scan" class="le-btn" onclick="startBarcodeScanner()">
+        <span class="le-icon">⊙</span>
+        <span class="le-label">Scan</span>
+      </button>
+      <button id="btn-quick-add" class="le-btn" onclick="toggleAddForm()">
+        <span class="le-icon">＋</span>
+        <span class="le-label">Manual</span>
+      </button>
+      <button id="btn-favorites" class="le-btn" onclick="toggleFavoritesPanel()">
+        <span class="le-icon">★</span>
+        <span class="le-label">Favorites</span>
+      </button>
+      <button id="btn-recent" class="le-btn" onclick="loadRecentMeal()">
+        <span class="le-icon">↺</span>
+        <span class="le-label">Recent</span>
+      </button>
+    </div>
+
+    <div id="le-favorites-panel">
+      <div class="le-panel-header">Favorites</div>
+      <div id="le-favorites-grid" class="quick-add-grid"></div>
+    </div>
+
+    <div id="scanner-overlay">
+      <video id="scanner-video" playsinline autoplay muted></video>
+      <div class="scanner-frame"></div>
+      <div class="scanner-hint">Point camera at a barcode</div>
+      <button class="btn secondary" onclick="closeBarcodeScanner()">Cancel</button>
     </div>
 
     <div id="over-alert" class="alert-bar">⚠ You've exceeded your calorie target for today. Consider lighter options for your next meal.</div>
@@ -1859,6 +2000,82 @@ function addCustomFood() {
   renderFoodTab();
   renderQuickAdd();
   ['cf-name','cf-cal','cf-prot','cf-carb','cf-fat'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── FAST LOG ENTRY ──
+let _scannerStream = null;
+
+function startBarcodeScanner() {
+  if (!('BarcodeDetector' in window)) {
+    toggleAddForm();
+    return;
+  }
+  const overlay = document.getElementById('scanner-overlay');
+  overlay.classList.add('open');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      _scannerStream = stream;
+      const video = document.getElementById('scanner-video');
+      video.srcObject = stream;
+      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
+      const scan = () => {
+        if (!overlay.classList.contains('open')) return;
+        detector.detect(video).then(codes => {
+          if (codes.length > 0) {
+            closeBarcodeScanner();
+            document.getElementById('f-name').value = codes[0].rawValue;
+            toggleAddForm();
+          } else {
+            requestAnimationFrame(scan);
+          }
+        }).catch(() => requestAnimationFrame(scan));
+      };
+      video.addEventListener('loadeddata', scan, { once: true });
+    })
+    .catch(() => {
+      closeBarcodeScanner();
+      toggleAddForm();
+    });
+}
+
+function closeBarcodeScanner() {
+  document.getElementById('scanner-overlay').classList.remove('open');
+  if (_scannerStream) {
+    _scannerStream.getTracks().forEach(t => t.stop());
+    _scannerStream = null;
+  }
+}
+
+function toggleFavoritesPanel() {
+  const panel = document.getElementById('le-favorites-panel');
+  const btn = document.getElementById('btn-favorites');
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+  if (!isOpen) return;
+  const enabled = userProfile.enabledFoodIds;
+  const foods = enabled.length ? foodDatabase.filter(f => enabled.includes(f.id)) : foodDatabase;
+  const grid = document.getElementById('le-favorites-grid');
+  if (!foods.length) {
+    grid.innerHTML = '<div class="empty-state" style="padding:20px 0">No favorites set — enable foods in the Foods tab.</div>';
+    return;
+  }
+  grid.innerHTML = foods.map(f => {
+    const idx = foodDatabase.indexOf(f);
+    return `<button class="quick-food-btn" onclick="quickAdd(${idx})"><div class="qf-name">${f.name}</div><div class="qf-macros"><span style="color:var(--accent)">${f.cal} cal</span><span class="p">${f.prot}P</span><span class="c">${f.carb}C</span><span class="f">${f.fat}F</span></div></button>`;
+  }).join('');
+}
+
+function loadRecentMeal() {
+  const dates = Object.keys(logsByDate).sort().reverse();
+  const recentDate = dates.find(d => d !== selectedDate && (logsByDate[d] || []).length > 0);
+  if (!recentDate) return;
+  const items = logsByDate[recentDate];
+  if (!logsByDate[selectedDate]) logsByDate[selectedDate] = [];
+  logItems = logsByDate[selectedDate];
+  items.forEach(item => logItems.push({ ...item }));
+  saveLog();
+  renderLog();
+  updateStats();
 }
 
 // ── ADD FOOD FORM ──
