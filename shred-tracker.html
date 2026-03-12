@@ -898,19 +898,19 @@ let logItems = JSON.parse(localStorage.getItem('shred-log') || '[]');
 let weightLog = JSON.parse(localStorage.getItem('shred-weights') || '[]');
 
 // ── QUICK FOODS ──
-const QUICK_FOODS = [
-  { name: 'Chicken Breast (6oz)', cal: 186, prot: 38, carb: 0, fat: 4 },
-  { name: 'Eggs (3 whole)', cal: 216, prot: 18, carb: 2, fat: 15 },
-  { name: 'Greek Yogurt (1 cup)', cal: 130, prot: 22, carb: 9, fat: 0 },
-  { name: 'Brown Rice (1 cup)', cal: 216, prot: 5, carb: 45, fat: 2 },
-  { name: 'Sweet Potato (med)', cal: 103, prot: 2, carb: 24, fat: 0 },
-  { name: 'Salmon (6oz)', cal: 310, prot: 42, carb: 0, fat: 14 },
-  { name: 'Ground Beef 93% (5oz)', cal: 215, prot: 30, carb: 0, fat: 10 },
-  { name: 'Oatmeal (1 cup)', cal: 154, prot: 5, carb: 27, fat: 3 },
-  { name: 'Cottage Cheese (1 cup)', cal: 206, prot: 28, carb: 8, fat: 5 },
-  { name: 'Protein Shake', cal: 130, prot: 25, carb: 6, fat: 2 },
-  { name: 'Broccoli (2 cups)', cal: 62, prot: 5, carb: 12, fat: 0 },
-  { name: 'Almonds (1oz)', cal: 164, prot: 6, carb: 6, fat: 14 },
+const foodDatabase = [
+  { id: 'chicken-breast', name: 'Chicken Breast (6oz)', cal: 186, prot: 38, carb: 0, fat: 4, category: 'protein' },
+  { id: 'eggs',           name: 'Eggs (3 whole)',       cal: 216, prot: 18, carb: 2, fat: 15, category: 'mixed' },
+  { id: 'greek-yogurt',   name: 'Greek Yogurt (1 cup)', cal: 130, prot: 22, carb: 9, fat: 0,  category: 'protein' },
+  { id: 'brown-rice',     name: 'Brown Rice (1 cup)',   cal: 216, prot: 5,  carb: 45, fat: 2, category: 'carb' },
+  { id: 'sweet-potato',   name: 'Sweet Potato (med)',   cal: 103, prot: 2,  carb: 24, fat: 0, category: 'carb' },
+  { id: 'salmon',         name: 'Salmon (6oz)',         cal: 310, prot: 42, carb: 0, fat: 14, category: 'protein' },
+  { id: 'ground-beef',    name: 'Ground Beef 93% (5oz)',cal: 215, prot: 30, carb: 0, fat: 10, category: 'protein' },
+  { id: 'oatmeal',        name: 'Oatmeal (1 cup)',      cal: 154, prot: 5,  carb: 27, fat: 3, category: 'carb' },
+  { id: 'cottage-cheese', name: 'Cottage Cheese (1 cup)',cal: 206, prot: 28, carb: 8, fat: 5, category: 'protein' },
+  { id: 'protein-shake',  name: 'Protein Shake',        cal: 130, prot: 25, carb: 6, fat: 2,  category: 'protein' },
+  { id: 'broccoli',       name: 'Broccoli (2 cups)',    cal: 62,  prot: 5,  carb: 12, fat: 0, category: 'veggie' },
+  { id: 'almonds',        name: 'Almonds (1oz)',         cal: 164, prot: 6,  carb: 6, fat: 14, category: 'fat' },
 ];
 
 // ── MEAL PLAN ──
@@ -982,7 +982,7 @@ function switchTab(tab) {
 // ── QUICK ADD RENDER ──
 function renderQuickAdd() {
   const grid = document.getElementById('quick-grid');
-  grid.innerHTML = QUICK_FOODS.map((f, i) => `
+  grid.innerHTML = foodDatabase.map((f, i) => `
     <button class="quick-food-btn" onclick="quickAdd(${i})">
       <div class="qf-name">${f.name}</div>
       <div class="qf-macros">
@@ -996,7 +996,7 @@ function renderQuickAdd() {
 }
 
 function quickAdd(idx) {
-  const f = QUICK_FOODS[idx];
+  const f = foodDatabase[idx];
   logItems.push({ ...f });
   saveLog();
   renderLog();
