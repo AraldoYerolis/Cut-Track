@@ -13,6 +13,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   // ------------------------------------------------------------------
+  // Diagnostic: confirm this file executed and the controller is live
+  // ------------------------------------------------------------------
+  console.log("BOOTSTRAP LOADED");
+  console.log("Controller:", window.FoodInputController);
+
+  // ------------------------------------------------------------------
   // 1. Register all input adapters with the controller
   // ------------------------------------------------------------------
   FoodInputController.registerAdapter('scan',      new BarcodeScannerAdapter());
@@ -21,23 +27,26 @@ document.addEventListener('DOMContentLoaded', function () {
   FoodInputController.registerAdapter('quickadd',  new QuickAddAdapter());
 
   // ------------------------------------------------------------------
-  // 2. Attach click handler to the existing scan button (#btn-scan).
-  //    Falls back to manual barcode entry if the camera adapter rejects.
+  // 2. Global scan click interceptor — catches any element whose id,
+  //    class, or data-action indicates a scan intent, regardless of
+  //    where in the DOM it lives. Falls back to manual entry if the
+  //    camera adapter rejects.
   // ------------------------------------------------------------------
-  var scanBtn = document.querySelector('#btn-scan');
-  if (scanBtn) {
-    scanBtn.addEventListener('click', async function () {
-      try {
-        await FoodInputController.requestFoodInput('scan');
-      } catch (scanErr) {
-        try {
-          await FoodInputController.requestFoodInput('manual');
-        } catch (manualErr) {
-          // Both adapters unavailable or dismissed — nothing to log.
-        }
-      }
-    });
-  }
+  document.addEventListener("click", async (e) => {
+    const scanButton = e.target.closest('[id*="scan"], [class*="scan"], [data-action="scan"]');
+    if (!scanButton) return;
+
+    console.log("GLOBAL SCAN INTERCEPT");
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await window.FoodInputController.requestFoodInput("scan");
+    } catch (err) {
+      console.log("Scan failed → manual fallback");
+      await window.FoodInputController.requestFoodInput("manual");
+    }
+  });
 
   // ------------------------------------------------------------------
   // 3. Global food:selected listener — forwards to the existing log

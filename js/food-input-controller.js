@@ -308,4 +308,10 @@
   } else {
     global.FoodInputController = createFoodInputController();
   }
+
+  // Ensure the singleton is always reachable as window.FoodInputController
+  // regardless of how this script was bundled or included.
+  if (typeof window !== 'undefined' && !window.FoodInputController) {
+    window.FoodInputController = global.FoodInputController;
+  }
 })(typeof window !== 'undefined' ? window : this);
