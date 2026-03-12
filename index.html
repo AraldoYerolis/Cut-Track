@@ -664,6 +664,68 @@
     .settings-grid { grid-template-columns: 1fr 1fr; }
   }
 
+  /* ── MACRO PRESSURE PANEL ── */
+  #macro-pressure {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #macro-pressure .mp-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mp-bar-wrap { }
+
+  .mp-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .mp-bar-label .mp-remaining {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .mp-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .mp-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background-color 0.4s ease;
+  }
+
+  #macro-protein .mp-bar-fill { background: var(--protein-color); }
+  #macro-carb    .mp-bar-fill { background: var(--carb-color); }
+  #macro-fat     .mp-bar-fill { background: var(--fat-color); }
+
+  /* Tension states override fill color */
+  .mp-bar-wrap.macro-tension .mp-bar-fill { background: #ffb347; }
+  .mp-bar-wrap.macro-critical .mp-bar-fill { background: var(--danger); }
+
+  .mp-bar-wrap.macro-tension .mp-remaining { color: #ffb347; }
+  .mp-bar-wrap.macro-critical .mp-remaining { color: var(--danger); }
+
   /* ── EXECUTION HERO ── */
   #execution-hero {
     display: flex;
@@ -1097,6 +1159,40 @@
       <div id="protocol-status-badge">ON TRACK</div>
       <div id="logging-streak-value">0</div>
     </section>
+
+    <div id="macro-pressure">
+      <div class="mp-header">Macro Pressure</div>
+
+      <div class="mp-bar-wrap" id="macro-protein">
+        <div class="mp-bar-label">
+          <span>Protein</span>
+          <span class="mp-remaining" id="mp-prot-remaining">0g left</span>
+        </div>
+        <div class="mp-bar-track">
+          <div class="mp-bar-fill" id="mp-prot-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="mp-bar-wrap" id="macro-carb">
+        <div class="mp-bar-label">
+          <span>Carbs</span>
+          <span class="mp-remaining" id="mp-carb-remaining">0g left</span>
+        </div>
+        <div class="mp-bar-track">
+          <div class="mp-bar-fill" id="mp-carb-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="mp-bar-wrap" id="macro-fat">
+        <div class="mp-bar-label">
+          <span>Fat</span>
+          <span class="mp-remaining" id="mp-fat-remaining">0g left</span>
+        </div>
+        <div class="mp-bar-track">
+          <div class="mp-bar-fill" id="mp-fat-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
 
     <div id="over-alert" class="alert-bar">⚠ You've exceeded your calorie target for today. Consider lighter options for your next meal.</div>
 
@@ -1917,6 +2013,34 @@ function updateStats() {
     badge.textContent = 'OVER';
     badge.classList.add('status-over');
   }
+
+  // Macro pressure panel
+  (function() {
+    var macros = [
+      { wrapId: 'macro-protein', barId: 'mp-prot-bar', remId: 'mp-prot-remaining', target: targets.prot, consumed: totP },
+      { wrapId: 'macro-carb',    barId: 'mp-carb-bar',  remId: 'mp-carb-remaining',  target: targets.carb, consumed: totC },
+      { wrapId: 'macro-fat',     barId: 'mp-fat-bar',   remId: 'mp-fat-remaining',   target: targets.fat,  consumed: totF }
+    ];
+    macros.forEach(function(m) {
+      var remaining = m.target - m.consumed;
+      var pct = Math.min(100, m.target > 0 ? (m.consumed / m.target) * 100 : 0);
+      var wrap = document.getElementById(m.wrapId);
+      var remEl = document.getElementById(m.remId);
+      var barEl = document.getElementById(m.barId);
+
+      barEl.style.width = pct + '%';
+      remEl.textContent = remaining + 'g left';
+
+      wrap.classList.remove('macro-tension', 'macro-critical');
+      if (m.target > 0) {
+        if (remaining < m.target * 0.1) {
+          wrap.classList.add('macro-critical');
+        } else if (remaining < m.target * 0.3) {
+          wrap.classList.add('macro-tension');
+        }
+      }
+    });
+  })();
 
   renderWeeklySummary();
 }
