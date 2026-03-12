@@ -1037,7 +1037,11 @@ function switchTab(tab) {
 // ── QUICK ADD RENDER ──
 function renderQuickAdd() {
   const grid = document.getElementById('quick-grid');
-  grid.innerHTML = foodDatabase.map((f, i) => `
+  const enabled = userProfile.enabledFoodIds;
+  grid.innerHTML = foodDatabase
+    .map((f, i) => ({ f, i }))
+    .filter(({ f }) => !enabled.length || enabled.includes(f.id))
+    .map(({ f, i }) => `
     <button class="quick-food-btn" onclick="quickAdd(${i})">
       <div class="qf-name">${f.name}</div>
       <div class="qf-macros">
@@ -1056,6 +1060,17 @@ function quickAdd(idx) {
   saveLog();
   renderLog();
   updateStats();
+}
+
+function toggleFoodEnabled(id) {
+  const idx = userProfile.enabledFoodIds.indexOf(id);
+  if (idx === -1) {
+    userProfile.enabledFoodIds.push(id);
+  } else {
+    userProfile.enabledFoodIds.splice(idx, 1);
+  }
+  saveProfile();
+  renderQuickAdd();
 }
 
 // ── ADD FOOD FORM ──
