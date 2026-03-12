@@ -674,9 +674,291 @@
     header { flex-wrap: wrap; }
     nav { margin-left: 0; width: 100%; overflow-x: auto; }
   }
+
+  /* ── ONBOARDING MODAL ── */
+  .onboarding-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+
+  .onboarding-overlay.hidden { display: none; }
+
+  .onboarding-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    padding: 36px 36px 32px;
+  }
+
+  .onboarding-progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+
+  .onboarding-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+
+  .onboarding-dot.active { background: var(--accent); }
+  .onboarding-dot.done { background: var(--success); }
+
+  .onboarding-step { display: none; }
+  .onboarding-step.active { display: block; }
+
+  .onboarding-step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .onboarding-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .onboarding-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .onboarding-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    padding: 16px 20px;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+    letter-spacing: 2px;
+    -moz-appearance: textfield;
+  }
+
+  .onboarding-input::-webkit-outer-spin-button,
+  .onboarding-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .onboarding-input:focus { border-color: var(--accent); }
+
+  .onboarding-unit {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .onboarding-option-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .onboarding-option-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .onboarding-option-btn:hover { border-color: var(--accent); }
+  .onboarding-option-btn.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.07);
+    color: var(--accent);
+  }
+
+  .onboarding-food-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .onboarding-food-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 11px 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+  }
+
+  .onboarding-food-btn:hover { border-color: var(--accent); }
+  .onboarding-food-btn.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.07);
+  }
+
+  .onboarding-food-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .onboarding-food-cal {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  .onboarding-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    align-items: center;
+  }
+
+  @media (max-width: 540px) {
+    .onboarding-modal { padding: 28px 20px 24px; }
+    .onboarding-title { font-size: 32px; }
+    .onboarding-food-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
+
+<!-- ── ONBOARDING MODAL ── -->
+<div class="onboarding-overlay hidden" id="onboarding-overlay">
+  <div class="onboarding-modal">
+
+    <div class="onboarding-progress" id="onboarding-dots">
+      <div class="onboarding-dot active"></div>
+      <div class="onboarding-dot"></div>
+      <div class="onboarding-dot"></div>
+      <div class="onboarding-dot"></div>
+      <div class="onboarding-dot"></div>
+      <div class="onboarding-dot"></div>
+    </div>
+
+    <!-- Step 1: Weight -->
+    <div class="onboarding-step active" id="ob-step-1">
+      <div class="onboarding-step-label">Step 1 of 6</div>
+      <div class="onboarding-title">YOUR WEIGHT</div>
+      <div class="onboarding-sub">How much do you currently weigh?</div>
+      <input class="onboarding-input" type="number" id="ob-weight" placeholder="185" min="50" max="999">
+      <div class="onboarding-unit">pounds (lbs)</div>
+    </div>
+
+    <!-- Step 2: Height -->
+    <div class="onboarding-step" id="ob-step-2">
+      <div class="onboarding-step-label">Step 2 of 6</div>
+      <div class="onboarding-title">YOUR HEIGHT</div>
+      <div class="onboarding-sub">How tall are you? Enter total inches (5'10" = 70).</div>
+      <input class="onboarding-input" type="number" id="ob-height" placeholder="70" min="48" max="96">
+      <div class="onboarding-unit">inches total</div>
+    </div>
+
+    <!-- Step 3: Age -->
+    <div class="onboarding-step" id="ob-step-3">
+      <div class="onboarding-step-label">Step 3 of 6</div>
+      <div class="onboarding-title">YOUR AGE</div>
+      <div class="onboarding-sub">How old are you?</div>
+      <input class="onboarding-input" type="number" id="ob-age" placeholder="30" min="14" max="100">
+      <div class="onboarding-unit">years old</div>
+    </div>
+
+    <!-- Step 4: Activity -->
+    <div class="onboarding-step" id="ob-step-4">
+      <div class="onboarding-step-label">Step 4 of 6</div>
+      <div class="onboarding-title">ACTIVITY LEVEL</div>
+      <div class="onboarding-sub">How active are you during the week?</div>
+      <div class="onboarding-option-grid">
+        <button class="onboarding-option-btn" onclick="selectObOption('activity','sedentary',this)">
+          <span>SEDENTARY</span><span style="font-size:11px;color:var(--muted)">Desk job, no exercise</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('activity','light',this)">
+          <span>LIGHT</span><span style="font-size:11px;color:var(--muted)">1–3 days / week</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('activity','moderate',this)">
+          <span>MODERATE</span><span style="font-size:11px;color:var(--muted)">3–5 days / week</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('activity','high',this)">
+          <span>HIGH</span><span style="font-size:11px;color:var(--muted)">6–7 days / week</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('activity','athlete',this)">
+          <span>ATHLETE</span><span style="font-size:11px;color:var(--muted)">Twice daily / physical job</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 5: Goal -->
+    <div class="onboarding-step" id="ob-step-5">
+      <div class="onboarding-step-label">Step 5 of 6</div>
+      <div class="onboarding-title">YOUR GOAL</div>
+      <div class="onboarding-sub">What are you working toward?</div>
+      <div class="onboarding-option-grid">
+        <button class="onboarding-option-btn" onclick="selectObOption('goal','cut',this)">
+          <span>CUT</span><span style="font-size:11px;color:var(--muted)">–500 kcal deficit</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('goal','aggressiveCut',this)">
+          <span>AGGRESSIVE CUT</span><span style="font-size:11px;color:var(--muted)">–800 kcal deficit</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('goal','maintain',this)">
+          <span>MAINTAIN</span><span style="font-size:11px;color:var(--muted)">Stay at current weight</span>
+        </button>
+        <button class="onboarding-option-btn" onclick="selectObOption('goal','leanBulk',this)">
+          <span>LEAN BULK</span><span style="font-size:11px;color:var(--muted)">+250 kcal surplus</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 6: Favorite Foods -->
+    <div class="onboarding-step" id="ob-step-6">
+      <div class="onboarding-step-label">Step 6 of 6</div>
+      <div class="onboarding-title">FAVORITE FOODS</div>
+      <div class="onboarding-sub">Pick foods you eat regularly — they'll appear in Quick Add. Skip to enable all.</div>
+      <div class="onboarding-food-grid" id="ob-food-grid"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="onboarding-nav">
+      <button class="btn" id="ob-back-btn" onclick="obPrev()" style="display:none;">← BACK</button>
+      <button class="btn accent" id="ob-next-btn" onclick="obNext()" style="margin-left:auto;">NEXT →</button>
+    </div>
+
+  </div>
+</div>
 
 <header>
   <div>
@@ -1272,6 +1554,10 @@ function init() {
   const today = new Date().toISOString().split('T')[0];
   const wDate = document.getElementById('w-date');
   if (wDate) wDate.value = today;
+
+  if (!localStorage.getItem('shred-onboarded')) {
+    showOnboarding();
+  }
 }
 
 // ── TAB SWITCHING ──
@@ -1712,6 +1998,112 @@ function saveSettings() {
   const msg = document.getElementById('settings-saved-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2000);
+}
+
+// ── ONBOARDING ──
+let obStep = 1;
+const OB_TOTAL = 6;
+const obData = { weight: null, height: null, age: null, activity: null, goal: null, enabledFoodIds: [] };
+
+function showOnboarding() {
+  const grid = document.getElementById('ob-food-grid');
+  grid.innerHTML = foodDatabase.map(f => `
+    <button class="onboarding-food-btn" id="obf-${f.id}" onclick="toggleObFood('${f.id}', this)">
+      <div class="onboarding-food-name">${f.name}</div>
+      <div class="onboarding-food-cal">${f.cal} cal &middot; ${f.prot}g P</div>
+    </button>
+  `).join('');
+
+  obStep = 1;
+  renderObStep();
+  document.getElementById('onboarding-overlay').classList.remove('hidden');
+}
+
+function renderObStep() {
+  for (let i = 1; i <= OB_TOTAL; i++) {
+    document.getElementById('ob-step-' + i).classList.toggle('active', i === obStep);
+  }
+
+  const dots = document.getElementById('onboarding-dots').children;
+  for (let i = 0; i < dots.length; i++) {
+    dots[i].classList.remove('active', 'done');
+    if (i + 1 < obStep) dots[i].classList.add('done');
+    else if (i + 1 === obStep) dots[i].classList.add('active');
+  }
+
+  document.getElementById('ob-back-btn').style.display = obStep > 1 ? '' : 'none';
+
+  const nextBtn = document.getElementById('ob-next-btn');
+  nextBtn.textContent = obStep === OB_TOTAL ? 'FINISH ✓' : 'NEXT →';
+}
+
+function selectObOption(field, value, el) {
+  obData[field] = value;
+  el.closest('.onboarding-option-grid').querySelectorAll('.onboarding-option-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleObFood(id, el) {
+  const idx = obData.enabledFoodIds.indexOf(id);
+  if (idx === -1) {
+    obData.enabledFoodIds.push(id);
+    el.classList.add('selected');
+  } else {
+    obData.enabledFoodIds.splice(idx, 1);
+    el.classList.remove('selected');
+  }
+}
+
+function obNext() {
+  if (obStep === 1) {
+    const v = parseFloat(document.getElementById('ob-weight').value);
+    if (!v || v < 50 || v > 999) { document.getElementById('ob-weight').focus(); return; }
+    obData.weight = v;
+  } else if (obStep === 2) {
+    const v = parseInt(document.getElementById('ob-height').value);
+    if (!v || v < 48 || v > 96) { document.getElementById('ob-height').focus(); return; }
+    obData.height = v;
+  } else if (obStep === 3) {
+    const v = parseInt(document.getElementById('ob-age').value);
+    if (!v || v < 14 || v > 100) { document.getElementById('ob-age').focus(); return; }
+    obData.age = v;
+  } else if (obStep === 4) {
+    if (!obData.activity) return;
+  } else if (obStep === 5) {
+    if (!obData.goal) return;
+  }
+
+  if (obStep < OB_TOTAL) {
+    obStep++;
+    renderObStep();
+  } else {
+    finishOnboarding();
+  }
+}
+
+function obPrev() {
+  if (obStep > 1) {
+    obStep--;
+    renderObStep();
+  }
+}
+
+function finishOnboarding() {
+  userProfile.weight        = obData.weight   || userProfile.weight;
+  userProfile.height        = obData.height   || userProfile.height;
+  userProfile.age           = obData.age      || userProfile.age;
+  userProfile.activity      = obData.activity || userProfile.activity;
+  userProfile.goal          = obData.goal     || userProfile.goal;
+  userProfile.enabledFoodIds = obData.enabledFoodIds;
+
+  saveProfile();
+  localStorage.setItem('shred-onboarded', 'true');
+
+  renderSettingsTab();
+  renderQuickAdd();
+  updateStats();
+
+  document.getElementById('onboarding-overlay').classList.add('hidden');
 }
 
 // ── BOOT ──
