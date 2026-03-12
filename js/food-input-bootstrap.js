@@ -10,6 +10,11 @@
  *  - ONLY registers adapters and forwards selected foods to existing globals.
  */
 
+// TEMP DEBUG
+console.log("FOOD BOOTSTRAP LOADED");
+document.body.setAttribute("data-food-bootstrap", "loaded");
+// END TEMP DEBUG
+
 document.addEventListener('DOMContentLoaded', function () {
 
   // ------------------------------------------------------------------
