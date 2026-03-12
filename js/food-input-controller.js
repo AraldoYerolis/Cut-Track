@@ -118,17 +118,30 @@
     /**
      * Register an adapter for a given source type.
      *
-     * An adapter is an async (or Promise-returning) function that, when called,
-     * resolves with a food payload object:
-     *   { name, calories, protein, carbs, fat, [source] }
+     * Accepts two forms:
+     *
+     *   1. Plain function (original behaviour, fully backwards-compatible):
+     *        registerAdapter('scan', () => Promise<FoodPayload>)
+     *
+     *   2. Adapter instance — any object that implements the FoodInputAdapter
+     *      contract (isAvailable + requestInput), including FoodInputAdapter
+     *      subclasses and plain duck-typed objects:
+     *        registerAdapter('scan', new MyScanAdapter())
+     *
+     *      When an instance is supplied, the controller wraps it in a function
+     *      that first checks isAvailable(); if the adapter reports unavailable
+     *      it rejects with a descriptive error so callers can fall back.
      *
      * Registering a new adapter for an already-registered type replaces the
      * previous one — useful for feature detection / progressive enhancement.
+     * Adapters are stored as plain functions internally; the distinction between
+     * a function and an instance is resolved once at registration time, making
+     * subsequent calls in requestFoodInput() unconditionally fast.
      *
-     * @param {string}   sourceType  One of the VALID_SOURCE_TYPES values.
-     * @param {Function} adapterFn   () => Promise<FoodPayload>
+     * @param {string}            sourceType     One of the VALID_SOURCE_TYPES values.
+     * @param {Function|object}   adapterOrFn    Plain function OR adapter instance.
      */
-    function registerAdapter(sourceType, adapterFn) {
+    function registerAdapter(sourceType, adapterOrFn) {
       if (!VALID_SOURCE_TYPES.includes(sourceType)) {
         throw new TypeError(
           `"${sourceType}" is not a recognised source type. ` +
@@ -136,9 +149,34 @@
         );
       }
 
-      if (typeof adapterFn !== 'function') {
+      let adapterFn;
+
+      if (typeof adapterOrFn === 'function') {
+        // Plain function — preserve existing behaviour exactly.
+        adapterFn = adapterOrFn;
+      } else if (
+        adapterOrFn !== null &&
+        typeof adapterOrFn === 'object' &&
+        typeof adapterOrFn.isAvailable === 'function' &&
+        typeof adapterOrFn.requestInput === 'function'
+      ) {
+        // Adapter instance (FoodInputAdapter subclass or duck-typed equivalent).
+        // Wrap so requestFoodInput() always works with a plain async function.
+        const instance = adapterOrFn;
+        adapterFn = async function () {
+          const available = await instance.isAvailable();
+          if (!available) {
+            throw new Error(
+              `Adapter for "${sourceType}" reported it is not available.`
+            );
+          }
+          return instance.requestInput();
+        };
+      } else {
         throw new TypeError(
-          `Adapter for "${sourceType}" must be a function, got ${typeof adapterFn}.`
+          `Adapter for "${sourceType}" must be a function or an object with ` +
+            'isAvailable() and requestInput() methods, ' +
+            `got ${adapterOrFn === null ? 'null' : typeof adapterOrFn}.`
         );
       }
 
