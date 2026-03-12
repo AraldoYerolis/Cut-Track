@@ -27,33 +27,26 @@ document.addEventListener('DOMContentLoaded', function () {
   FoodInputController.registerAdapter('quickadd',  new QuickAddAdapter());
 
   // ------------------------------------------------------------------
-  // 2. Attach click handler to the existing scan button (#btn-scan).
-  //    Falls back to manual barcode entry if the camera adapter rejects.
+  // 2. Global scan click interceptor — catches any element whose id,
+  //    class, or data-action indicates a scan intent, regardless of
+  //    where in the DOM it lives. Falls back to manual entry if the
+  //    camera adapter rejects.
   // ------------------------------------------------------------------
-  var scanBtn = document.querySelector('#btn-scan');
-  if (scanBtn) {
-    // Clone and replace to strip ALL existing click listeners safely.
-    var scanBtnClone = scanBtn.cloneNode(true);
-    scanBtn.parentNode.replaceChild(scanBtnClone, scanBtn);
+  document.addEventListener("click", async (e) => {
+    const scanButton = e.target.closest('[id*="scan"], [class*="scan"], [data-action="scan"]');
+    if (!scanButton) return;
 
-    scanBtnClone.addEventListener('click', async () => {
-      console.log("SCAN CLICKED");
-      try {
-        console.log("REQUESTING SCAN INPUT");
-        await FoodInputController.requestFoodInput('scan');
-      } catch (e) {
-        console.error("Food input error", e);
-        try {
-          console.log("REQUESTING SCAN INPUT");
-          await FoodInputController.requestFoodInput('manual');
-        } catch (e2) {
-          console.error("Food input error", e2);
-        }
-      }
-    });
+    console.log("GLOBAL SCAN INTERCEPT");
+    e.preventDefault();
+    e.stopPropagation();
 
-    console.log('SCAN BUTTON OVERRIDDEN');
-  }
+    try {
+      await window.FoodInputController.requestFoodInput("scan");
+    } catch (err) {
+      console.log("Scan failed → manual fallback");
+      await window.FoodInputController.requestFoodInput("manual");
+    }
+  });
 
   // ------------------------------------------------------------------
   // 3. Global food:selected listener — forwards to the existing log
