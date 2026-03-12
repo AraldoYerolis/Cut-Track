@@ -664,6 +664,62 @@
     .settings-grid { grid-template-columns: 1fr 1fr; }
   }
 
+  /* ── EXECUTION HERO ── */
+  #execution-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  #remaining-calories-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  #protocol-status-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+  }
+
+  #protocol-status-badge.status-ontrack {
+    color: var(--success);
+    border-color: var(--success);
+    background: rgba(76, 255, 145, 0.08);
+  }
+
+  #protocol-status-badge.status-risk {
+    color: #ffb347;
+    border-color: #ffb347;
+    background: rgba(255, 179, 71, 0.08);
+  }
+
+  #protocol-status-badge.status-over {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(255, 69, 69, 0.08);
+  }
+
+  #logging-streak-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-left: auto;
+  }
+
   @media (max-width: 768px) {
     .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .meal-plan-grid { grid-template-columns: 1fr; }
@@ -1035,6 +1091,12 @@
         <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">day logging streak</span>
       </div>
     </div>
+
+    <section id="execution-hero">
+      <div id="remaining-calories-value">0</div>
+      <div id="protocol-status-badge">ON TRACK</div>
+      <div id="logging-streak-value">0</div>
+    </section>
 
     <div id="over-alert" class="alert-bar">⚠ You've exceeded your calorie target for today. Consider lighter options for your next meal.</div>
 
@@ -1837,7 +1899,25 @@ function updateStats() {
   else alert.classList.remove('show');
 
   // Logging streak
-  document.getElementById('streak-number').textContent = calculateLoggingStreak();
+  const streak = calculateLoggingStreak();
+  document.getElementById('streak-number').textContent = streak;
+
+  // Execution hero
+  document.getElementById('remaining-calories-value').textContent = remCal;
+  document.getElementById('logging-streak-value').textContent = streak;
+  const badge = document.getElementById('protocol-status-badge');
+  badge.classList.remove('status-ontrack', 'status-risk', 'status-over');
+  if (remCal >= 300) {
+    badge.textContent = 'ON TRACK';
+    badge.classList.add('status-ontrack');
+  } else if (remCal >= 0) {
+    badge.textContent = 'RISK';
+    badge.classList.add('status-risk');
+  } else {
+    badge.textContent = 'OVER';
+    badge.classList.add('status-over');
+  }
+
   renderWeeklySummary();
 }
 
