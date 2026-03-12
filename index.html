@@ -2074,13 +2074,40 @@ function addCustomFood() {
 // ── FAST LOG ENTRY ──
 let _scannerStream = null;
 
+async function scanBarcode(barcode) {
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.status !== 1 || !data.product) return null;
+    const p = data.product;
+    const n = p.nutriments || {};
+    // Prefer per-serving data; fall back to per-100g
+    const sfx = (n['energy-kcal_serving'] != null) ? '_serving' : '_100g';
+    return {
+      name: (p.product_name || p.product_name_en || '').trim() || barcode,
+      cal:  Math.round(n['energy-kcal' + sfx] ?? n['energy-kcal'] ?? 0),
+      prot: Math.round(n['proteins' + sfx]      ?? n.proteins      ?? 0),
+      carb: Math.round(n['carbohydrates' + sfx] ?? n.carbohydrates  ?? 0),
+      fat:  Math.round(n['fat' + sfx]           ?? n.fat            ?? 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function startBarcodeScanner() {
+  const overlay = document.getElementById('scanner-overlay');
+  const hint = overlay.querySelector('.scanner-hint');
   if (!('BarcodeDetector' in window)) {
     toggleAddForm();
     return;
   }
-  const overlay = document.getElementById('scanner-overlay');
   overlay.classList.add('open');
+  hint.textContent = 'Point camera at a barcode';
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(stream => {
       _scannerStream = stream;
@@ -2089,10 +2116,21 @@ function startBarcodeScanner() {
       const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
       const scan = () => {
         if (!overlay.classList.contains('open')) return;
-        detector.detect(video).then(codes => {
+        detector.detect(video).then(async codes => {
           if (codes.length > 0) {
+            hint.textContent = 'Looking up product…';
+            const barcode = codes[0].rawValue;
+            const result = await scanBarcode(barcode);
             closeBarcodeScanner();
-            document.getElementById('f-name').value = codes[0].rawValue;
+            if (result) {
+              document.getElementById('f-name').value = result.name;
+              document.getElementById('f-cal').value  = result.cal;
+              document.getElementById('f-prot').value = result.prot;
+              document.getElementById('f-carb').value = result.carb;
+              document.getElementById('f-fat').value  = result.fat;
+            } else {
+              document.getElementById('f-name').value = barcode;
+            }
             toggleAddForm();
           } else {
             requestAnimationFrame(scan);
@@ -2102,6 +2140,7 @@ function startBarcodeScanner() {
       video.addEventListener('loadeddata', scan, { once: true });
     })
     .catch(() => {
+      // Camera permission denied or unavailable — fall back to manual entry
       closeBarcodeScanner();
       toggleAddForm();
     });
