@@ -897,6 +897,24 @@ const TARGETS = { cal: 2100, prot: 185, carb: 175, fat: 65 };
 let logItems = JSON.parse(localStorage.getItem('shred-log') || '[]');
 let weightLog = JSON.parse(localStorage.getItem('shred-weights') || '[]');
 
+// ── USER PROFILE ──
+const PROFILE_DEFAULT = {
+  weight: 235,
+  height: 72,
+  age: 40,
+  sex: 'male',
+  activity: 'moderate',
+  goal: 'cut',
+  enabledFoodIds: [],
+  customFoods: [],
+  mealPresets: []
+};
+let userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
+
+function saveProfile() {
+  localStorage.setItem('shred-profile', JSON.stringify(userProfile));
+}
+
 // ── QUICK FOODS ──
 const foodDatabase = [
   { id: 'chicken-breast', name: 'Chicken Breast (6oz)', cal: 186, prot: 38, carb: 0, fat: 4, category: 'protein' },
@@ -959,6 +977,7 @@ const MEAL_PLAN = [
 
 // ── INIT ──
 function init() {
+  userProfile = JSON.parse(localStorage.getItem('shred-profile') || 'null') || { ...PROFILE_DEFAULT };
   renderQuickAdd();
   renderLog();
   renderMealPlan();
