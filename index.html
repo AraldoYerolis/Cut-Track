@@ -1082,6 +1082,56 @@
     .onboarding-title { font-size: 32px; }
     .onboarding-food-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── OUTCOME SIGNAL ── */
+  #outcome-signal {
+    margin-top: 24px;
+  }
+
+  .outcome-signal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .outcome-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .outcome-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .outcome-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .outcome-unit {
+    font-size: 18px;
+    margin-left: 2px;
+  }
+
+  .outcome-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 600px) {
+    .outcome-signal-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1492,6 +1542,25 @@
     <div class="progress-card" id="weekly-summary-card" style="margin-top:24px;">
       <div class="section-title" style="font-size:16px;margin-bottom:16px;">WEEKLY SUMMARY</div>
       <div id="weekly-summary-content"></div>
+    </div>
+
+    <div class="progress-card" id="outcome-signal" style="margin-top:24px;">
+      <div class="section-title" style="font-size:16px;margin-bottom:16px;">OUTCOME SIGNAL</div>
+      <div class="outcome-signal-grid">
+        <div class="outcome-metric">
+          <div class="outcome-label">WEEKLY WEIGHT DELTA</div>
+          <div class="outcome-value" id="weekly-weight-delta">—</div>
+        </div>
+        <div class="outcome-metric">
+          <div class="outcome-label">EXECUTION SCORE</div>
+          <div class="outcome-value" id="execution-score">—</div>
+          <div class="outcome-sub" id="execution-score-sub"></div>
+        </div>
+        <div class="outcome-metric">
+          <div class="outcome-label">TREND</div>
+          <div class="outcome-value" id="trend-indicator">—</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2321,6 +2390,7 @@ function renderWeightHistory() {
     container.innerHTML = '<div class="empty-state" style="padding:20px 0;">No weight entries yet.</div>';
     updateProgressStats(null);
     renderChart([]);
+    renderOutcomeSignal();
     return;
   }
 
@@ -2348,6 +2418,7 @@ function renderWeightHistory() {
   updateProgressStats(weightLog);
   renderChart(weightLog);
   renderWeeklySummary();
+  renderOutcomeSignal();
 }
 
 function updateProgressStats(data) {
@@ -2470,6 +2541,58 @@ function renderWeeklySummary() {
       <span class="target-val" style="color:${changeColor}">${weightChange !== null ? (weightChange > 0 ? '+' : '') + weightChange + ' lbs' : '—'}</span>
     </div>
   `;
+}
+
+// ── OUTCOME SIGNAL ──
+function renderOutcomeSignal() {
+  const deltaEl = document.getElementById('weekly-weight-delta');
+  const scoreEl = document.getElementById('execution-score');
+  const scoreSubEl = document.getElementById('execution-score-sub');
+  const trendEl = document.getElementById('trend-indicator');
+  if (!deltaEl || !scoreEl || !trendEl) return;
+
+  // Weekly weight delta
+  const weeklyDelta = calculateWeeklyWeightChange();
+  if (weeklyDelta !== null) {
+    const sign = weeklyDelta > 0 ? '+' : '';
+    deltaEl.textContent = sign + weeklyDelta + ' lbs';
+    deltaEl.style.color = weeklyDelta < 0 ? 'var(--success)' : weeklyDelta > 0 ? 'var(--danger)' : 'var(--muted)';
+  } else {
+    deltaEl.textContent = '—';
+    deltaEl.style.color = '';
+  }
+
+  // Execution score: food days logged in last 7 days
+  const today = new Date();
+  let daysLoggedLast7 = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    if (logsByDate[dateStr] && logsByDate[dateStr].length > 0) daysLoggedLast7++;
+  }
+  const executionScore = Math.round((daysLoggedLast7 / 7) * 100);
+  scoreEl.innerHTML = executionScore + '<span class="outcome-unit">%</span>';
+  scoreEl.style.color = executionScore >= 80 ? 'var(--success)' : executionScore >= 50 ? 'var(--accent)' : 'var(--danger)';
+  if (scoreSubEl) scoreSubEl.textContent = daysLoggedLast7 + ' / 7 days logged';
+
+  // Trend indicator
+  let trend = 'FLAT';
+  if (weightLog.length >= 2) {
+    const latestWeight = weightLog[weightLog.length - 1].weight;
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().slice(0, 10);
+    const older = weightLog.filter(e => e.date <= weekAgoStr);
+    if (older.length > 0) {
+      const weight7DaysAgo = older[older.length - 1].weight;
+      if (latestWeight < weight7DaysAgo) trend = 'DOWN';
+      else if (latestWeight > weight7DaysAgo) trend = 'UP';
+    }
+  }
+  const trendArrow = trend === 'DOWN' ? '↓' : trend === 'UP' ? '↑' : '→';
+  trendEl.textContent = trendArrow + ' ' + trend;
+  trendEl.style.color = trend === 'DOWN' ? 'var(--success)' : trend === 'UP' ? 'var(--danger)' : 'var(--muted)';
 }
 
 // ── SETTINGS TAB ──
