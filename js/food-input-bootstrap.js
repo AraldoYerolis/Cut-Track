@@ -10,89 +10,135 @@
  *  - ONLY registers adapters and forwards selected foods to existing globals.
  */
 
-console.log("FOOD BOOTSTRAP FILE EXECUTED");
+(function (global) {
+  'use strict';
 
-// TEMP DEBUG
-console.log("FOOD BOOTSTRAP LOADED");
-document.body.setAttribute("data-food-bootstrap", "loaded");
-// END TEMP DEBUG
+  var doc = global.document;
+  var initRan = false;
+  var badgeEl = null;
 
-document.addEventListener('DOMContentLoaded', function () {
-  console.log("FOOD BOOTSTRAP DOM READY");
+  if (!doc || !doc.documentElement) return;
 
-  // ------------------------------------------------------------------
-  // Diagnostic: confirm this file executed and the controller is live
-  // ------------------------------------------------------------------
-  console.log("BOOTSTRAP LOADED");
-  console.log("Controller:", window.FoodInputController);
+  console.log('FOOD BOOTSTRAP FILE EXECUTED');
+  doc.documentElement.setAttribute('data-food-bootstrap-file', 'executed');
+  doc.documentElement.setAttribute('data-food-bootstrap-init', 'pending');
 
-  // ------------------------------------------------------------------
-  // 1. Register all input adapters with the controller
-  // ------------------------------------------------------------------
-  FoodInputController.registerAdapter('scan',      new BarcodeScannerAdapter());
-  FoodInputController.registerAdapter('manual',    new ManualBarcodeAdapter());
-  FoodInputController.registerAdapter('favorites', new FavoritesAdapter());
-  FoodInputController.registerAdapter('quickadd',  new QuickAddAdapter());
+  function ensureBadge() {
+    if (badgeEl && badgeEl.parentNode) return badgeEl;
+    if (!doc.body) return null;
 
-  // ------------------------------------------------------------------
-  // 2. Global scan click interceptor — catches any element whose id,
-  //    class, or data-action indicates a scan intent, regardless of
-  //    where in the DOM it lives. Falls back to manual entry if the
-  //    camera adapter rejects.
-  // ------------------------------------------------------------------
-  document.addEventListener("click", async (e) => {
-    console.log("SCAN BUTTON HANDLER ENTERED");
-    const scanButton = e.target.closest('[id*="scan"], [class*="scan"], [data-action="scan"]');
-    if (!scanButton) return;
+    badgeEl = doc.createElement('div');
+    badgeEl.setAttribute('aria-hidden', 'true');
+    badgeEl.style.cssText = [
+      'position:fixed',
+      'right:12px',
+      'bottom:12px',
+      'z-index:2147483647',
+      'padding:6px 8px',
+      'border-radius:999px',
+      'background:rgba(0,0,0,0.82)',
+      'color:#fff',
+      'font:600 11px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif',
+      'letter-spacing:0.02em',
+      'pointer-events:none',
+      'box-shadow:0 4px 12px rgba(0,0,0,0.35)'
+    ].join(';');
 
-    console.log("GLOBAL SCAN INTERCEPT");
-    e.preventDefault();
-    e.stopPropagation();
+    doc.body.appendChild(badgeEl);
+    return badgeEl;
+  }
 
-    try {
-      await window.FoodInputController.requestFoodInput("scan");
-    } catch (err) {
-      console.log("Scan failed → manual fallback");
-      await window.FoodInputController.requestFoodInput("manual");
+  function updateBadge(text) {
+    var el = ensureBadge();
+    if (el) el.textContent = text;
+  }
+
+  updateBadge('BOOT FILE ONLY');
+
+  function initFoodBootstrap() {
+    if (initRan) return;
+    initRan = true;
+
+    console.log('FOOD BOOTSTRAP DOM READY');
+    doc.documentElement.setAttribute('data-food-bootstrap-init', 'started');
+    updateBadge('BOOT INIT STARTED');
+
+    console.log('BOOTSTRAP LOADED');
+    console.log('Controller:', global.FoodInputController);
+
+    if (!global.FoodInputController) {
+      console.warn('FoodInputController missing during bootstrap init');
+      doc.documentElement.setAttribute('data-food-bootstrap-init', 'controller-missing');
+      updateBadge('BOOT WAIT CTRL');
+      return;
     }
-  });
 
-  // ------------------------------------------------------------------
-  // 3. Global food:selected listener — forwards to the existing log
-  //    pipeline without changing how logging currently works.
-  //
-  //    The event is dispatched on window by FoodInputController but
-  //    bubbles to document, so document.addEventListener captures it.
-  //
-  //    Logging mirrors the shape used by quickAdd() / addFood():
-  //      { foodId, servings, cal, prot, carb, fat, name }
-  // ------------------------------------------------------------------
-  document.addEventListener('food:selected', function (event) {
-    var detail = event.detail;
-
-    if (!logsByDate[selectedDate]) {
-      logsByDate[selectedDate] = [];
+    if (global.BarcodeScannerAdapter) {
+      global.FoodInputController.registerAdapter('scan', new global.BarcodeScannerAdapter());
     }
-    logItems = logsByDate[selectedDate];
+    if (global.ManualBarcodeAdapter) {
+      global.FoodInputController.registerAdapter('manual', new global.ManualBarcodeAdapter());
+    }
+    if (global.FavoritesAdapter) {
+      global.FoodInputController.registerAdapter('favorites', new global.FavoritesAdapter());
+    }
+    if (global.QuickAddAdapter) {
+      global.FoodInputController.registerAdapter('quickadd', new global.QuickAddAdapter());
+    }
 
-    logItems.push({
-      foodId:   null,
-      servings: 1,
-      cal:      detail.calories,
-      prot:     detail.protein,
-      carb:     detail.carbs,
-      fat:      detail.fat,
-      name:     detail.name
+    doc.addEventListener('click', async function (e) {
+      console.log('SCAN BUTTON HANDLER ENTERED');
+      var scanButton = e.target && e.target.closest
+        ? e.target.closest('[id*="scan"], [class*="scan"], [data-action="scan"]')
+        : null;
+
+      if (!scanButton) return;
+
+      doc.documentElement.setAttribute('data-scan-tap', String(Date.now()));
+      console.log('GLOBAL SCAN INTERCEPT');
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        await global.FoodInputController.requestFoodInput('scan');
+      } catch (err) {
+        console.log('Scan failed â manual fallback');
+        await global.FoodInputController.requestFoodInput('manual');
+      }
+    }, true);
+
+    doc.addEventListener('food:selected', function (event) {
+      var detail = event.detail;
+      if (!detail) return;
+
+      if (!global.logsByDate[global.selectedDate]) {
+        global.logsByDate[global.selectedDate] = [];
+      }
+      global.logItems = global.logsByDate[global.selectedDate];
+
+      global.logItems.push({
+        foodId: null,
+        servings: 1,
+        cal: detail.calories,
+        prot: detail.protein,
+        carb: detail.carbs,
+        fat: detail.fat,
+        name: detail.name
+      });
+
+      global.saveLog();
+      global.renderLog();
+      global.updateStats();
     });
 
-    saveLog();
-    renderLog();
-    updateStats();
-  });
+    console.log('CUTOS Food Input Engine Ready');
+    doc.documentElement.setAttribute('data-food-bootstrap-init', 'done');
+    updateBadge('BOOT INIT DONE');
+  }
 
-  // ------------------------------------------------------------------
-  // 4. Confirm engine is live
-  // ------------------------------------------------------------------
-  console.log('CUTOS Food Input Engine Ready');
-
-});
+  if (doc.readyState === 'loading') {
+    doc.addEventListener('DOMContentLoaded', initFoodBootstrap, { once: true });
+  } else {
+    initFoodBootstrap();
+  }
+})(window);
