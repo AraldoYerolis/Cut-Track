@@ -10,12 +10,15 @@
  *  - ONLY registers adapters and forwards selected foods to existing globals.
  */
 
+console.log("FOOD BOOTSTRAP FILE EXECUTED");
+
 // TEMP DEBUG
 console.log("FOOD BOOTSTRAP LOADED");
 document.body.setAttribute("data-food-bootstrap", "loaded");
 // END TEMP DEBUG
 
 document.addEventListener('DOMContentLoaded', function () {
+  console.log("FOOD BOOTSTRAP DOM READY");
 
   // ------------------------------------------------------------------
   // Diagnostic: confirm this file executed and the controller is live
@@ -38,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
   //    camera adapter rejects.
   // ------------------------------------------------------------------
   document.addEventListener("click", async (e) => {
+    console.log("SCAN BUTTON HANDLER ENTERED");
     const scanButton = e.target.closest('[id*="scan"], [class*="scan"], [data-action="scan"]');
     if (!scanButton) return;
 
